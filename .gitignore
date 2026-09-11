@@ -32,3 +32,9 @@ Thumbs.db
 .vscode/
 
 **/nbproject/private/
+**/conf/development.ini
+**/conf/development.local.ini
+**/conf/production.ini
+**/conf/*.local.ini
+**/*.pem
+**/*.key
