@@ -8,6 +8,6 @@ package servlet;
  *
  * @author tuanlee
  */
-public class LogoutServlet {
+public class LogoutServlet extends BaseServlet{
     
 }
