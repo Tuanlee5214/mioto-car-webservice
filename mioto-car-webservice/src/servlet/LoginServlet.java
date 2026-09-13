@@ -4,10 +4,23 @@
  */
 package servlet;
 
+import util.ClientHolder;
+import wrapper.CarClientWrapper;
+
 /**
  *
  * @author tuanlee
  */
 public class LoginServlet extends BaseServlet{
+    
+    private static final long serialVersionUID = 1;
+    private CarClientWrapper _mw;
+    
+    @Override
+    public void init()
+    {
+        _mw = ClientHolder.get();
+    }
+    
     
 }
