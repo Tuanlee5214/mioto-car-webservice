@@ -75,7 +75,7 @@ public class LoginServlet extends BaseServlet {
             ok(resp, data);
 
         } catch (Exception e) {
-            _Logger.error("login failed", ex);
+            _Logger.error("login failed", e);
             fail(resp, HttpServletResponse.SC_INTERNAL_SERVER_ERROR, Err.FAIL, "internal error");
         }
 
