@@ -4,10 +4,101 @@
  */
 package servlet;
 
+import error.Err;
+import java.util.LinkedHashMap;
+import java.util.Map;
+import java.util.regex.Matcher;
+import java.util.regex.Pattern;
+import javax.servlet.http.HttpServletRequest;
+import javax.servlet.http.HttpServletResponse;
+import thrift.TUpdateUserResult;
+import thrift.TUser;
+import thrift.TUserResult;
+import util.ClientHolder;
+import wrapper.CarClientWrapper;
+
 /**
  *
  * @author tuanlee
  */
 public class ProfileServlet extends AuthServlet {
+    private static final long serialVersionUID = 1;
+    private CarClientWrapper _mw;
+    private static final Pattern EMAIL_PATTERN = Pattern.compile("^[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\\.[a-zA-Z]{2,}$");
+
     
+    @Override
+    public void init()
+    {
+        _mw = ClientHolder.get();
+    }
+    
+    @Override
+    protected void doPost(HttpServletRequest req, HttpServletResponse resp)
+    {
+        try
+        {
+            Map<String, Object> body = jsonBody(req);
+            String email = param(req, body, "email");
+            String name = param(req, body, "displayName");            
+            if(name == null || name.isEmpty())
+            {
+                fail(resp, HttpServletResponse.SC_BAD_REQUEST, Err.BAD_REQUEST, "Name is not blank");
+                return;
+            }
+            Matcher macher = EMAIL_PATTERN.matcher(email);
+            if(!macher.matches()){
+                fail(resp, HttpServletResponse.SC_BAD_REQUEST, Err.BAD_REQUEST, "Email is not in the correct format");
+                return;
+            }
+            
+            TUser user = new TUser();
+            user.setUserId(userId(req));
+            user.setDisplayName(name);
+            user.setEmail(email);
+            user.setTimeUpdated(System.currentTimeMillis());
+            TUpdateUserResult ret = _mw.updateUser(user);
+            
+            if(Err.isFail(ret.getError()))
+            {
+                fail(resp, HttpServletResponse.SC_BAD_REQUEST, Err.FAIL, "Can not update");
+                return;
+            }
+            
+            ok(resp, "Updated successfully");
+        }
+        catch(Exception e)
+        {
+            _Logger.error("profile update failed", e);
+            fail(resp, HttpServletResponse.SC_INTERNAL_SERVER_ERROR, Err.FAIL, "internal error");
+        }
+    }
+    
+    @Override
+    protected void doGet(HttpServletRequest req, HttpServletResponse resp)
+    {
+        try
+        {
+            TUserResult ret = _mw.getUser(userId(req));
+            if(Err.isFail(ret.getError()))
+            {
+                fail(resp, HttpServletResponse.SC_NOT_FOUND, Err.NOT_FOUND, "User not found");
+                return;
+            }
+            
+            TUser result = ret.getValue();
+            Map<String, Object> data = new LinkedHashMap<String, Object>();
+            data.put("userId", result.getUserId());
+            data.put("phone", result.getPhone());
+            data.put("email", result.getEmail());
+            data.put("displayName", result.getDisplayName());
+            data.put("status", result.getStatus());
+            ok(resp, data);
+        }
+        catch(Exception e)
+        {
+            _Logger.error("profile update failed", e);
+            fail(resp, HttpServletResponse.SC_INTERNAL_SERVER_ERROR, Err.FAIL, "internal error");
+        }
+    }
 }
