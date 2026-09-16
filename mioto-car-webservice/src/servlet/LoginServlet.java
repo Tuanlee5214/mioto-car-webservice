@@ -28,7 +28,7 @@ public class LoginServlet extends BaseServlet {
     protected void doPost(HttpServletRequest req, HttpServletResponse resp) {
         try {
             
-            TUserResult result = getAuthenticatedUser(req);
+            TUserResult result = getAuthenticatedUser(req, resp);
             if (Err.isNetworkError(result.getError())) {
                 _Logger.error("session lookup failed, err=" + result.getError());
                 fail(resp, HttpServletResponse.SC_SERVICE_UNAVAILABLE, result.getError(), "service unavailable");
@@ -36,7 +36,7 @@ public class LoginServlet extends BaseServlet {
             }
             else if(Err.isSuccess(result.getError())) 
             {
-                fail(resp, HttpServletResponse.SC_CONFLICT, result.getError(), "You are currently logged in");
+                fail(resp, HttpServletResponse.SC_OK, Err.FAIL, "You are currently logged in");
                 return;
             }
             Map<String, Object> body = jsonBody(req);

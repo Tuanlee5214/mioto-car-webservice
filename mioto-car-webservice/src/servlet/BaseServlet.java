@@ -100,20 +100,25 @@ public class BaseServlet extends HttpServlet{
         writeJson(resp, httpStatus, body);
     }
         
-    protected TUserResult getAuthenticatedUser(HttpServletRequest req)
+    protected TUserResult getAuthenticatedUser(HttpServletRequest req, HttpServletResponse resp)
     {
         TUserResult result = new TUserResult();
         long sessionId = CookieSigner.verify(CookieUtil.read(req));
         if(sessionId <= 0) return new TUserResult(Err.UNAUTHORIZED, "");
         
         TUserResult ret = ClientHolder.get().getUserBySessionId(sessionId);
-        if(Err.isFail(ret.getError()))
+        if(Err.isFail(ret.getError()) || ret.value == null)
         {
             if(Err.isNetworkError(ret.getError()))
             {
+                _Logger.error("session lookup failed, err=" + ret.getError());
                 return new TUserResult(Err.NO_CONNECTION, "");
             }
-            else return new TUserResult(Err.UNAUTHORIZED, "");
+            else 
+            {
+                CookieUtil.clear(resp);
+                return new TUserResult(Err.UNAUTHORIZED, "");
+            }
         }
         
         result.setError(Err.SUCCESS);

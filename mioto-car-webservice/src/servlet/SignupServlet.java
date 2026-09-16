@@ -31,7 +31,7 @@ public class SignupServlet extends BaseServlet {
     @Override
     protected void doPost(HttpServletRequest req, HttpServletResponse resp) {
         try {
-            TUserResult result = getAuthenticatedUser(req);
+            TUserResult result = getAuthenticatedUser(req, resp);
             if (Err.isNetworkError(result.getError())) {
                 _Logger.error("session lookup failed, err=" + result.getError());
                 fail(resp, HttpServletResponse.SC_SERVICE_UNAVAILABLE, result.getError(), "service unavailable");
@@ -40,7 +40,7 @@ public class SignupServlet extends BaseServlet {
             else if(Err.isSuccess(result.getError())) 
             {
                 _Logger.info("User has already logged in, userId = " + String.valueOf(result.value.getUserId()));
-                fail(resp, HttpServletResponse.SC_CONFLICT, result.getError(), "You are currently logged in. Please log out if you want to create a new account");
+                fail(resp, HttpServletResponse.SC_CONFLICT, Err.FAIL, "You are currently logged in. Please log out if you want to create a new account");
                 return;
             }
 
