@@ -16,14 +16,6 @@ import wrapper.CarClientWrapper;
  * @author tuanlee
  */
 public class LogoutServlet extends BaseServlet{
-    private static final long serialVersionUID = 1;
-    private CarClientWrapper _mw;
-    
-    @Override
-    public void init()
-    {
-        _mw = ClientHolder.get();
-    }
     
     @Override
     protected void doPost(HttpServletRequest req, HttpServletResponse resp)
@@ -33,7 +25,7 @@ public class LogoutServlet extends BaseServlet{
             long sessionId = CookieSigner.verify(CookieUtil.read(req));
             if(sessionId > 0)
             {
-                _mw.logout(sessionId);
+                ClientHolder.get().logout(sessionId);
             }
             CookieUtil.clear(resp);
             ok(resp, "logged out");

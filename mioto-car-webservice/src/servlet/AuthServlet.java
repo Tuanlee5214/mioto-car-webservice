@@ -9,7 +9,8 @@ import java.io.IOException;
 import javax.servlet.ServletException;
 import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
-import thrift.TSessionResult;
+import thrift.TUser;
+import thrift.TUserResult;
 import util.ClientHolder;
 import util.CookieSigner;
 import util.CookieUtil;
@@ -22,7 +23,7 @@ public class AuthServlet extends BaseServlet {
     
     private static final long serialVersionUID = 1L;
 
-    public static final String ATTR_USER_ID    = "auth.userId";
+    public static final String ATTR_USER    = "auth.user";
     public static final String ATTR_SESSION_ID = "auth.sessionId";
 
     @Override
@@ -38,10 +39,9 @@ public class AuthServlet extends BaseServlet {
             return;                                   
         }
 
-        TSessionResult sr = ClientHolder.get().getSession(sessionId);
+        TUserResult sr = ClientHolder.get().getUserBySessionId(sessionId);
         if (Err.isFail(sr.getError()) || sr.getValue() == null) {
             if (Err.isNetworkError(sr.getError())) {
-                // distinguish these in the LOG, but not in the response
                 _Logger.error("session lookup failed, err=" + sr.getError());
                 fail(resp, HttpServletResponse.SC_SERVICE_UNAVAILABLE, sr.getError(),
                         "service unavailable");
@@ -52,15 +52,15 @@ public class AuthServlet extends BaseServlet {
             return;
         }
 
-        req.setAttribute(ATTR_SESSION_ID, Long.valueOf(sessionId));
-        req.setAttribute(ATTR_USER_ID, Integer.valueOf(sr.getValue().getUserId()));
+        //req.setAttribute(ATTR_SESSION_ID, Long.valueOf(sessionId));
+        req.setAttribute(ATTR_USER, new TUser(sr.getValue()));
 
         super.service(req, resp);                      
     }
 
-    protected int userId(HttpServletRequest req) {
-        Integer v = (Integer) req.getAttribute(ATTR_USER_ID);
-        return v == null ? 0 : v.intValue();
+    protected TUser getUserFromRequest(HttpServletRequest req) {
+        TUser v = (TUser) req.getAttribute(ATTR_USER);
+        return v == null ? null : new TUser(v);
     }
 
 }

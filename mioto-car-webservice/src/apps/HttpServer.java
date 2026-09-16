@@ -16,7 +16,7 @@ import servlet.LogoutServlet;
 import servlet.ProfileServlet;
 import servlet.SignupServlet;
 import util.Config;
-
+    
 /**
  *
  * @author tuanlee
@@ -28,7 +28,7 @@ public class HttpServer {
     private final Server _server;
 
     public HttpServer() {
-        _port = Config.getInt(HttpServer.class, "web", "port", 8080);
+        _port = Config.getInt(HttpServer.class, "web", "port", 8081);
         _server = new Server(_port);
 
         // 1. servlets, registered in CODE - no web.xml anywhere in this project

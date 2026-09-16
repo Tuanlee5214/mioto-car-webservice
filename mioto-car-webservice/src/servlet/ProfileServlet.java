@@ -15,24 +15,14 @@ import thrift.TUpdateUserResult;
 import thrift.TUser;
 import thrift.TUserResult;
 import util.ClientHolder;
-import wrapper.CarClientWrapper;
 
 /**
  *
  * @author tuanlee
  */
 public class ProfileServlet extends AuthServlet {
-    private static final long serialVersionUID = 1;
-    private CarClientWrapper _mw;
     private static final Pattern EMAIL_PATTERN = Pattern.compile("^[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\\.[a-zA-Z]{2,}$");
 
-    
-    @Override
-    public void init()
-    {
-        _mw = ClientHolder.get();
-    }
-    
     @Override
     protected void doPost(HttpServletRequest req, HttpServletResponse resp)
     {
@@ -43,24 +33,27 @@ public class ProfileServlet extends AuthServlet {
             String name = param(req, body, "displayName");            
             if(name == null || name.isEmpty())
             {
+                _Logger.info("Name is blank, name = " + name);
                 fail(resp, HttpServletResponse.SC_BAD_REQUEST, Err.BAD_REQUEST, "Name is not blank");
                 return;
             }
             Matcher macher = EMAIL_PATTERN.matcher(email);
             if(!macher.matches()){
+                _Logger.info("Email is incorrect format, email = " + email);
                 fail(resp, HttpServletResponse.SC_BAD_REQUEST, Err.BAD_REQUEST, "Email is not in the correct format");
                 return;
             }
             
             TUser user = new TUser();
-            user.setUserId(userId(req));
+            user.setUserId(getUserFromRequest(req).getUserId());
             user.setDisplayName(name);
             user.setEmail(email);
             user.setTimeUpdated(System.currentTimeMillis());
-            TUpdateUserResult ret = _mw.updateUser(user);
+            TUpdateUserResult ret = ClientHolder.get().updateUser(user);
             
             if(Err.isFail(ret.getError()))
             {
+                _Logger.info("Update failed");
                 fail(resp, HttpServletResponse.SC_BAD_REQUEST, Err.FAIL, "Can not update");
                 return;
             }
@@ -79,9 +72,10 @@ public class ProfileServlet extends AuthServlet {
     {
         try
         {
-            TUserResult ret = _mw.getUser(userId(req));
+            TUserResult ret = ClientHolder.get().getUser(getUserFromRequest(req).getUserId());
             if(Err.isFail(ret.getError()))
             {
+                _Logger.info("User not found");
                 fail(resp, HttpServletResponse.SC_NOT_FOUND, Err.NOT_FOUND, "User not found");
                 return;
             }
