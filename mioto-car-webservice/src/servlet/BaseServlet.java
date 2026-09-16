@@ -5,6 +5,7 @@
 package servlet;
 
 import com.google.gson.Gson;
+import error.Err;
 import java.io.BufferedReader;
 import java.io.IOException;
 import java.util.LinkedHashMap;
@@ -14,13 +15,17 @@ import javax.servlet.http.HttpServlet;
 import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
 import org.apache.log4j.Logger;
+import thrift.TUserResult;
+import util.ClientHolder;
+import util.CookieSigner;
+import util.CookieUtil;
 
 /**
  *
  * @author tuanlee
  */
 public class BaseServlet extends HttpServlet{
-     private static final long serialVersionUID = 1L;
+    private static final long serialVersionUID = 1L;
     protected static final Logger _Logger = Logger.getLogger(BaseServlet.class);
 
     protected static final Gson GSON = new Gson();
@@ -93,5 +98,26 @@ public class BaseServlet extends HttpServlet{
         body.put("error", error);
         body.put("message", message);             
         writeJson(resp, httpStatus, body);
+    }
+        
+    protected TUserResult getAuthenticatedUser(HttpServletRequest req)
+    {
+        TUserResult result = new TUserResult();
+        long sessionId = CookieSigner.verify(CookieUtil.read(req));
+        if(sessionId <= 0) return new TUserResult(Err.UNAUTHORIZED, "");
+        
+        TUserResult ret = ClientHolder.get().getUserBySessionId(sessionId);
+        if(Err.isFail(ret.getError()))
+        {
+            if(Err.isNetworkError(ret.getError()))
+            {
+                return new TUserResult(Err.NO_CONNECTION, "");
+            }
+            else return new TUserResult(Err.UNAUTHORIZED, "");
+        }
+        
+        result.setError(Err.SUCCESS);
+        result.setValue(ret.value);
+        return result;
     }
 }

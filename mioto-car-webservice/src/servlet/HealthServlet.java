@@ -4,10 +4,19 @@
  */
 package servlet;
 
+import javax.servlet.http.HttpServletRequest;
+import javax.servlet.http.HttpServletResponse;
+
 /**
  *
  * @author tuanlee
  */
 public class HealthServlet extends BaseServlet{
     
+    @Override
+    protected void doGet(HttpServletRequest req, HttpServletResponse resp)
+    {
+        ok(resp, "OK");
+    }
 }
+    
