@@ -58,7 +58,7 @@ public class ProfileServlet extends AuthServlet {
                 return;
             }
             
-            ok(resp, "Updated successfully");
+            ok(resp, ret.value);
         }
         catch(Exception e)
         {

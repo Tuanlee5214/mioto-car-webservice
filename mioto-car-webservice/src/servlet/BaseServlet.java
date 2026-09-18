@@ -15,7 +15,6 @@ import javax.servlet.http.HttpServlet;
 import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
 import org.apache.log4j.Logger;
-import static org.eclipse.jetty.http.HttpMethod.OPTIONS;
 import thrift.TUserResult;
 import util.ClientHolder;
 import util.CookieSigner;
@@ -37,11 +36,7 @@ public class BaseServlet extends HttpServlet{
         req.setCharacterEncoding("UTF-8");       
         resp.setCharacterEncoding("UTF-8");
         
-        resp.setHeader("Access-Control-Allow-Origin", "http://localhost:3000");
-        resp.setHeader("Access-Control-Allow-Credentials", "true");
-        resp.setHeader("Access-Control-Allow-Methods", "GET, POST, PUT, DELETE, OPTIONS");
-        resp.setHeader("Access-Control-Allow-Headers", "Content-Type, Authorization");
-        
+        this.setCorsHeader(resp);
         if("OPTIONS".equalsIgnoreCase(req.getMethod())) {
             resp.setStatus(HttpServletResponse.SC_OK);
             return;
@@ -137,4 +132,13 @@ public class BaseServlet extends HttpServlet{
         result.setValue(ret.value);
         return result;
     }
+    
+    protected void setCorsHeader(HttpServletResponse resp)
+    {
+        resp.setHeader("Access-Control-Allow-Origin", "http://localhost:5173");
+        resp.setHeader("Access-Control-Allow-Credentials", "true");
+        resp.setHeader("Access-Control-Allow-Methods", "GET, POST, PUT, DELETE, OPTIONS");
+        resp.setHeader("Access-Control-Allow-Headers", "Content-Type, Authorization");
+    }
+
 }

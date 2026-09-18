@@ -30,6 +30,7 @@ public class AuthServlet extends BaseServlet {
         req.setCharacterEncoding("UTF-8");
         resp.setCharacterEncoding("UTF-8");
         
+        this.setCorsHeader(resp);
         if("OPTIONS".equalsIgnoreCase(req.getMethod()))
         {
             super.service(req, resp);
@@ -58,5 +59,6 @@ public class AuthServlet extends BaseServlet {
         TUser v = (TUser) req.getAttribute(ATTR_USER);
         return v == null ? null : new TUser(v);
     }
+    
 
 }
