@@ -29,6 +29,13 @@ public class AuthServlet extends BaseServlet {
 
         req.setCharacterEncoding("UTF-8");
         resp.setCharacterEncoding("UTF-8");
+        
+        if("OPTIONS".equalsIgnoreCase(req.getMethod()))
+        {
+            super.service(req, resp);
+            return;
+        }
+        
         TUserResult result = getAuthenticatedUser(req, resp);
         if(Err.isFail(result.getError()))
         {
