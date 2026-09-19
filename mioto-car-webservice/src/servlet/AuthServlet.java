@@ -43,9 +43,9 @@ public class AuthServlet extends BaseServlet {
             if(Err.isNetworkError(result.getError()))
             {
                 _Logger.error("Service unavailable");
-                fail(resp, HttpServletResponse.SC_SERVICE_UNAVAILABLE, result.getError(), "service unavailable");
+                fail(resp, HttpServletResponse.SC_SERVICE_UNAVAILABLE, result.getError(), "Lỗi server");
             }
-            else fail(resp, HttpServletResponse.SC_UNAUTHORIZED, Err.FAIL, "unauthorized");
+            else fail(resp, HttpServletResponse.SC_UNAUTHORIZED, Err.FAIL, "Bạn chưa đăng nhập");
             return;
         }
 

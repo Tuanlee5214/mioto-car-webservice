@@ -34,13 +34,13 @@ public class SignupServlet extends BaseServlet {
             TUserResult result = getAuthenticatedUser(req, resp);
             if (Err.isNetworkError(result.getError())) {
                 _Logger.error("session lookup failed, err=" + result.getError());
-                fail(resp, HttpServletResponse.SC_SERVICE_UNAVAILABLE, result.getError(), "service unavailable");
+                fail(resp, HttpServletResponse.SC_SERVICE_UNAVAILABLE, result.getError(), "Lỗi server");
                 return;
             }
             else if(Err.isSuccess(result.getError())) 
             {
                 _Logger.info("User has already logged in, userId = " + String.valueOf(result.value.getUserId()));
-                fail(resp, HttpServletResponse.SC_CONFLICT, Err.FAIL, "You are currently logged in. Please log out if you want to create a new account");
+                fail(resp, HttpServletResponse.SC_CONFLICT, Err.FAIL, "Bạn đã đăng nhập hãy đăng xuất để có thể đăng kí tài khoản mới");
                 return;
             }
 
@@ -52,28 +52,28 @@ public class SignupServlet extends BaseServlet {
 
             if (phone == null || !phone.matches("[0-9]{9,15}")) {
                 _Logger.info("Phone is incorrect format");
-                fail(resp, HttpServletResponse.SC_BAD_REQUEST, Err.BAD_REQUEST, "Phone number must contain only digits and be between 9 and 15 characters long.");
+                fail(resp, HttpServletResponse.SC_BAD_REQUEST, Err.BAD_REQUEST, "Số điện thoại chỉ được chứa chữ số và có từ 9 tới 15 kí tự");
                 return;
             }
             if (pwd == null || pwd.length() < 6 || pwd.length() > 128) {
                 _Logger.info("Password is not in range (6 -128) characters");
-                fail(resp, HttpServletResponse.SC_BAD_REQUEST, Err.BAD_REQUEST, "Password must be between 6 and 128 characters long");
+                fail(resp, HttpServletResponse.SC_BAD_REQUEST, Err.BAD_REQUEST, "Mật khẩu phải có từ 6 tới 128 kí tự");
                 return;
             }
             if (name == null || name.isEmpty()) {
                 _Logger.info("Name is blank");
-                fail(resp, HttpServletResponse.SC_BAD_REQUEST, Err.BAD_REQUEST, "Name is not blank");
+                fail(resp, HttpServletResponse.SC_BAD_REQUEST, Err.BAD_REQUEST, "Tên không được để trống");
                 return;
             }
             if (email == null || email.isEmpty()) {
                 _Logger.info("Email is blank");
-                fail(resp, HttpServletResponse.SC_BAD_REQUEST, Err.BAD_REQUEST, "Email is not blank");
+                fail(resp, HttpServletResponse.SC_BAD_REQUEST, Err.BAD_REQUEST, "Email không được để trống");
                 return;
             }
             Matcher matcher = EMAIL_PATTERN.matcher(email);
             if (!matcher.matches()) {
                 _Logger.info("Email is incorrect format, email = " + email);
-                fail(resp, HttpServletResponse.SC_BAD_REQUEST, Err.BAD_REQUEST, "Email is not in the correct format");
+                fail(resp, HttpServletResponse.SC_BAD_REQUEST, Err.BAD_REQUEST, "Email không đúng định dạng");
                 return;
             }
             TSignUpRequest sureq = new TSignUpRequest();
@@ -87,9 +87,9 @@ public class SignupServlet extends BaseServlet {
 
             if (Err.isFail(ret.getError())) {
                 if (ret.getError() == Err.CONFLICT) {
-                    fail(resp, HttpServletResponse.SC_CONFLICT, Err.CONFLICT, "This phone is already registered");
+                    fail(resp, HttpServletResponse.SC_CONFLICT, Err.CONFLICT, "Số điện thoại này đã tồn tại");
                 } else if (Err.isNetworkError(ret.getError())) {
-                    fail(resp, HttpServletResponse.SC_INTERNAL_SERVER_ERROR, Err.FAIL, "Service unavailable");
+                    fail(resp, HttpServletResponse.SC_INTERNAL_SERVER_ERROR, Err.FAIL, "Lỗi server");
                 }
                 return;
             }
@@ -101,7 +101,7 @@ public class SignupServlet extends BaseServlet {
             writeJson(resp, HttpServletResponse.SC_CREATED, envelope(0, data));
         } catch (Exception e) {
             _Logger.error("signup failed", e);
-            fail(resp, HttpServletResponse.SC_INTERNAL_SERVER_ERROR, Err.FAIL, "internal error");
+            fail(resp, HttpServletResponse.SC_INTERNAL_SERVER_ERROR, Err.FAIL, "Lỗi hệ thống");
         }
     }
 
