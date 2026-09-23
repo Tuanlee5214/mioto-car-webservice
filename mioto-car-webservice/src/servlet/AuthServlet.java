@@ -11,9 +11,6 @@ import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
 import thrift.TUser;
 import thrift.TUserResult;
-import util.ClientHolder;
-import util.CookieSigner;
-import util.CookieUtil;
 
 /**
  *
@@ -32,28 +29,28 @@ public class AuthServlet extends BaseServlet {
 
         req.setCharacterEncoding("UTF-8");
         resp.setCharacterEncoding("UTF-8");
-
-        long sessionId = CookieSigner.verify(CookieUtil.read(req));
-        if (sessionId <= 0) {
-            fail(resp, HttpServletResponse.SC_UNAUTHORIZED, Err.FAIL, "unauthorized");
-            return;                                   
+        
+        this.setCorsHeader(resp);
+        if("OPTIONS".equalsIgnoreCase(req.getMethod()))
+        {
+            super.service(req, resp);
+            return;
         }
-
-        TUserResult sr = ClientHolder.get().getUserBySessionId(sessionId);
-        if (Err.isFail(sr.getError()) || sr.getValue() == null) {
-            if (Err.isNetworkError(sr.getError())) {
-                _Logger.error("session lookup failed, err=" + sr.getError());
-                fail(resp, HttpServletResponse.SC_SERVICE_UNAVAILABLE, sr.getError(),
-                        "service unavailable");
-            } else {
-                CookieUtil.clear(resp);                
-                fail(resp, HttpServletResponse.SC_UNAUTHORIZED, Err.FAIL, "unauthorized");
+        
+        TUserResult result = getAuthenticatedUser(req, resp);
+        if(Err.isFail(result.getError()))
+        {
+            if(Err.isNetworkError(result.getError()))
+            {
+                _Logger.error("Service unavailable");
+                fail(resp, HttpServletResponse.SC_SERVICE_UNAVAILABLE, result.getError(), "Lỗi server");
             }
+            else fail(resp, HttpServletResponse.SC_UNAUTHORIZED, Err.FAIL, "Bạn chưa đăng nhập");
             return;
         }
 
         //req.setAttribute(ATTR_SESSION_ID, Long.valueOf(sessionId));
-        req.setAttribute(ATTR_USER, new TUser(sr.getValue()));
+        req.setAttribute(ATTR_USER, new TUser(result.getValue()));
 
         super.service(req, resp);                      
     }
@@ -62,5 +59,6 @@ public class AuthServlet extends BaseServlet {
         TUser v = (TUser) req.getAttribute(ATTR_USER);
         return v == null ? null : new TUser(v);
     }
+    
 
 }

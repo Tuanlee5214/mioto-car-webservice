@@ -35,7 +35,14 @@ public class BaseServlet extends HttpServlet{
             throws ServletException, IOException {
         req.setCharacterEncoding("UTF-8");       
         resp.setCharacterEncoding("UTF-8");
-        super.service(req, resp);                 
+        
+        this.setCorsHeader(resp);
+        if("OPTIONS".equalsIgnoreCase(req.getMethod())) {
+            resp.setStatus(HttpServletResponse.SC_OK);
+            return;
+        }            
+        
+        super.service(req, resp);
     }
 
     protected String readBody(HttpServletRequest req) throws IOException {
@@ -100,24 +107,38 @@ public class BaseServlet extends HttpServlet{
         writeJson(resp, httpStatus, body);
     }
         
-    protected TUserResult getAuthenticatedUser(HttpServletRequest req)
+    protected TUserResult getAuthenticatedUser(HttpServletRequest req, HttpServletResponse resp)
     {
         TUserResult result = new TUserResult();
         long sessionId = CookieSigner.verify(CookieUtil.read(req));
         if(sessionId <= 0) return new TUserResult(Err.UNAUTHORIZED, "");
         
         TUserResult ret = ClientHolder.get().getUserBySessionId(sessionId);
-        if(Err.isFail(ret.getError()))
+        if(Err.isFail(ret.getError()) || ret.value == null)
         {
             if(Err.isNetworkError(ret.getError()))
             {
+                _Logger.error("session lookup failed, err=" + ret.getError());
                 return new TUserResult(Err.NO_CONNECTION, "");
             }
-            else return new TUserResult(Err.UNAUTHORIZED, "");
+            else 
+            {
+                CookieUtil.clear(resp);
+                return new TUserResult(Err.UNAUTHORIZED, "");
+            }
         }
         
         result.setError(Err.SUCCESS);
         result.setValue(ret.value);
         return result;
     }
+    
+    protected void setCorsHeader(HttpServletResponse resp)
+    {
+        resp.setHeader("Access-Control-Allow-Origin", "http://localhost:5173");
+        resp.setHeader("Access-Control-Allow-Credentials", "true");
+        resp.setHeader("Access-Control-Allow-Methods", "GET, POST, PUT, DELETE, OPTIONS");
+        resp.setHeader("Access-Control-Allow-Headers", "Content-Type, Authorization");
+    }
+
 }

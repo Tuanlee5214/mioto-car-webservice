@@ -28,13 +28,13 @@ public class LogoutServlet extends BaseServlet{
                 ClientHolder.get().logout(sessionId);
             }
             CookieUtil.clear(resp);
-            ok(resp, "logged out");
+            ok(resp, "Đã đăng xuất");
         }
         catch(Exception e)
         {
             _Logger.error("logged out failed", e);
             CookieUtil.clear(resp);
-            ok(resp, "logged out");
+            ok(resp, "Đã đăng xuất");
         }
     }
 }

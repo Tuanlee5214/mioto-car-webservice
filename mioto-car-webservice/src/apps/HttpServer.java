@@ -1,4 +1,4 @@
-/*
+    /*
  * Click nbfs://nbhost/SystemFileSystem/Templates/Licenses/license-default.txt to change this license
  * Click nbfs://nbhost/SystemFileSystem/Templates/Classes/Class.java to edit this template
  */
@@ -13,6 +13,7 @@ import org.eclipse.jetty.servlet.ServletHandler;
 import servlet.HealthServlet;
 import servlet.LoginServlet;
 import servlet.LogoutServlet;
+import servlet.MeServlet;
 import servlet.ProfileServlet;
 import servlet.SignupServlet;
 import util.Config;
@@ -38,6 +39,7 @@ public class HttpServer {
         servlets.addServletWithMapping(LoginServlet.class,   "/api/login");
         servlets.addServletWithMapping(LogoutServlet.class,  "/api/logout");
         servlets.addServletWithMapping(ProfileServlet.class, "/api/profile");
+        servlets.addServletWithMapping(MeServlet.class, "/api/checkauth");
 
         // 2. static files from ./public served at /static
         ContextHandler statics = new ContextHandler("/static");

@@ -34,13 +34,13 @@ public class ProfileServlet extends AuthServlet {
             if(name == null || name.isEmpty())
             {
                 _Logger.info("Name is blank, name = " + name);
-                fail(resp, HttpServletResponse.SC_BAD_REQUEST, Err.BAD_REQUEST, "Name is not blank");
+                fail(resp, HttpServletResponse.SC_BAD_REQUEST, Err.BAD_REQUEST, "Tên không được để trống");
                 return;
             }
             Matcher macher = EMAIL_PATTERN.matcher(email);
             if(!macher.matches()){
                 _Logger.info("Email is incorrect format, email = " + email);
-                fail(resp, HttpServletResponse.SC_BAD_REQUEST, Err.BAD_REQUEST, "Email is not in the correct format");
+                fail(resp, HttpServletResponse.SC_BAD_REQUEST, Err.BAD_REQUEST, "Email không đúng định dạng");
                 return;
             }
             
@@ -54,16 +54,16 @@ public class ProfileServlet extends AuthServlet {
             if(Err.isFail(ret.getError()))
             {
                 _Logger.info("Update failed");
-                fail(resp, HttpServletResponse.SC_BAD_REQUEST, Err.FAIL, "Can not update");
+                fail(resp, HttpServletResponse.SC_BAD_REQUEST, Err.FAIL, "Không thể cập nhật thông tin");
                 return;
             }
             
-            ok(resp, "Updated successfully");
+            ok(resp, ret.value);
         }
         catch(Exception e)
         {
             _Logger.error("profile update failed", e);
-            fail(resp, HttpServletResponse.SC_INTERNAL_SERVER_ERROR, Err.FAIL, "internal error");
+            fail(resp, HttpServletResponse.SC_INTERNAL_SERVER_ERROR, Err.FAIL, "Lỗi hệ thống");
         }
     }
     
@@ -76,7 +76,7 @@ public class ProfileServlet extends AuthServlet {
             if(Err.isFail(ret.getError()))
             {
                 _Logger.info("User not found");
-                fail(resp, HttpServletResponse.SC_NOT_FOUND, Err.NOT_FOUND, "User not found");
+                fail(resp, HttpServletResponse.SC_NOT_FOUND, Err.NOT_FOUND, "Không tìm thấy người dùng này");
                 return;
             }
             
@@ -92,7 +92,7 @@ public class ProfileServlet extends AuthServlet {
         catch(Exception e)
         {
             _Logger.error("profile update failed", e);
-            fail(resp, HttpServletResponse.SC_INTERNAL_SERVER_ERROR, Err.FAIL, "internal error");
+            fail(resp, HttpServletResponse.SC_INTERNAL_SERVER_ERROR, Err.FAIL, "Lỗi hệ thống");
         }
     }
 }
