@@ -9,8 +9,12 @@ import java.io.IOException;
 import javax.servlet.ServletException;
 import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
+import thrift.TSessionResult;
 import thrift.TUser;
 import thrift.TUserResult;
+import util.ClientHolder;
+import util.CookieSigner;
+import util.CookieUtil;
 
 /**
  *
@@ -48,10 +52,18 @@ public class AuthServlet extends BaseServlet {
             else fail(resp, HttpServletResponse.SC_UNAUTHORIZED, Err.FAIL, "Bạn chưa đăng nhập");
             return;
         }
-
+        TSessionResult sessionResult = ClientHolder.get().getSession(CookieSigner.verify(CookieUtil.read(req)));
+        String userAgentFromDB = sessionResult.getValue().getUserAgent();
+        String userAgentFromCli = req.getHeader("User-Agent");
+        if(!userAgentFromDB.equals(userAgentFromCli))
+        {
+            _Logger.error("UserAgent does not match");
+            fail(resp, HttpServletResponse.SC_UNAUTHORIZED, Err.FAIL, "Bạn chưa đăng nhập");
+            return;
+        }
         //req.setAttribute(ATTR_SESSION_ID, Long.valueOf(sessionId));
         req.setAttribute(ATTR_USER, new TUser(result.getValue()));
-
+        
         super.service(req, resp);                      
     }
 

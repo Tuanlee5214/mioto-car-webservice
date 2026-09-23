@@ -23,4 +23,4 @@ public class MeServlet extends AuthServlet{
         data.put("user", user);
         ok(resp, data);
     }
-}
+}   

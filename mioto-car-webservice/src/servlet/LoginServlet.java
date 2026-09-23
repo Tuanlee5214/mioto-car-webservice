@@ -54,7 +54,7 @@ public class LoginServlet extends BaseServlet {
             }
             if (!RateLimiter.allow(phone, 5, 300) || !RateLimiter.allow(ClientInfo.ip(req), 30, 300)) {
                 _Logger.warn("Too many request");
-                fail(resp, 429, Err.FAIL, "Bạn đã gửi quá nhiều yêu cầu vui lòng thử lại");
+                fail(resp, 429, Err.FAIL, "Bạn đã gửi quá nhiều yêu cầu vui lòng thử lại sau");
                 return;
             }
 
