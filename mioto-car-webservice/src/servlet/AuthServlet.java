@@ -52,15 +52,15 @@ public class AuthServlet extends BaseServlet {
             else fail(resp, HttpServletResponse.SC_UNAUTHORIZED, Err.FAIL, "Bạn chưa đăng nhập");
             return;
         }
-        TSessionResult sessionResult = ClientHolder.get().getSession(CookieSigner.verify(CookieUtil.read(req)));
-        String userAgentFromDB = sessionResult.getValue().getUserAgent();
-        String userAgentFromCli = req.getHeader("User-Agent");
-        if(!userAgentFromDB.equals(userAgentFromCli))
-        {
-            _Logger.error("UserAgent does not match");
-            fail(resp, HttpServletResponse.SC_UNAUTHORIZED, Err.FAIL, "Bạn chưa đăng nhập");
-            return;
-        }
+//        TSessionResult sessionResult = ClientHolder.get().getSession(CookieSigner.verify(CookieUtil.read(req)));
+//        String userAgentFromDB = sessionResult.getValue().getUserAgent();
+//        String userAgentFromCli = req.getHeader("User-Agent");
+//        if(!userAgentFromDB.equals(userAgentFromCli))
+//        {
+//            _Logger.error("UserAgent does not match");
+//            fail(resp, HttpServletResponse.SC_UNAUTHORIZED, Err.FAIL, "Bạn chưa đăng nhập");
+//            return;
+//        }
         //req.setAttribute(ATTR_SESSION_ID, Long.valueOf(sessionId));
         req.setAttribute(ATTR_USER, new TUser(result.getValue()));
         
@@ -72,5 +72,4 @@ public class AuthServlet extends BaseServlet {
         return v == null ? null : new TUser(v);
     }
     
-
 }

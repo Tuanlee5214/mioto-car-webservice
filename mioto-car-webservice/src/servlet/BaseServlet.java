@@ -15,8 +15,10 @@ import javax.servlet.http.HttpServlet;
 import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
 import org.apache.log4j.Logger;
+import thrift.TLoginInfo;
 import thrift.TUserResult;
 import util.ClientHolder;
+import util.ClientInfo;
 import util.CookieSigner;
 import util.CookieUtil;
 
@@ -112,8 +114,9 @@ public class BaseServlet extends HttpServlet{
         TUserResult result = new TUserResult();
         long sessionId = CookieSigner.verify(CookieUtil.read(req));
         if(sessionId <= 0) return new TUserResult(Err.UNAUTHORIZED, "");
+        TLoginInfo info = ClientInfo.getLoginInfo(req);
         
-        TUserResult ret = ClientHolder.get().getUserBySessionId(sessionId);
+        TUserResult ret = ClientHolder.get().getUserBySessionId(sessionId, info);
         if(Err.isFail(ret.getError()) || ret.value == null)
         {
             if(Err.isNetworkError(ret.getError()))

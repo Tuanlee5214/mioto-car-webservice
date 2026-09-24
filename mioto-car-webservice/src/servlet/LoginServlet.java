@@ -52,7 +52,7 @@ public class LoginServlet extends BaseServlet {
                 fail(resp, HttpServletResponse.SC_BAD_REQUEST, Err.BAD_REQUEST, "Mật khẩu phải có từ 6 tới 128 kí tự");
                 return;
             }
-            if (!RateLimiter.allow(phone, 5, 300) || !RateLimiter.allow(ClientInfo.ip(req), 30, 300)) {
+            if (!RateLimiter.allow(phone, 5, 300) || !RateLimiter.allow(ClientInfo.getIp(req), 30, 300)) {
                 _Logger.warn("Too many request");
                 fail(resp, 429, Err.FAIL, "Bạn đã gửi quá nhiều yêu cầu vui lòng thử lại sau");
                 return;
@@ -61,7 +61,7 @@ public class LoginServlet extends BaseServlet {
             TLoginRequest lreq = new TLoginRequest();
             lreq.setPhone(phone);
             lreq.setPwd(pwd);
-            TLoginResult ret = ClientHolder.get().login(lreq, ClientInfo.from(req));
+            TLoginResult ret = ClientHolder.get().login(lreq, ClientInfo.getLoginInfo(req));
 
             if (Err.isFail(ret.getError())) {
                 if (ret.getError() == Err.FORBIDDEN) {

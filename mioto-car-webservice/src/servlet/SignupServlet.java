@@ -83,7 +83,7 @@ public class SignupServlet extends BaseServlet {
             sureq.setPwd(pwd);
 
             _Logger.info("Call signup from mw");
-            TLoginResult ret = ClientHolder.get().signup(sureq, ClientInfo.from(req));
+            TLoginResult ret = ClientHolder.get().signup(sureq, ClientInfo.getLoginInfo(req));
 
             if (Err.isFail(ret.getError())) {
                 if (ret.getError() == Err.CONFLICT) {
