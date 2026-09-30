@@ -31,11 +31,12 @@ public class VoucherServlet extends AuthServlet {
             }
             if (voucherId == 0) {
                 String title = param(req, null, "title");
+                String code  = param(req, null, "code");
                 String countFromParam = param(req, null, "count");
                 String offsetFromParam = param(req, null, "offset");
                 int count = Integer.parseInt((countFromParam == null || countFromParam.trim().isEmpty()) ? "20" : countFromParam);
                 int offset = Integer.parseInt((offsetFromParam == null || offsetFromParam.trim().isEmpty()) ? "0" : offsetFromParam);
-                TListVoucherResult result = ClientHolder.get().getVoucher(title, count, offset);
+                TListVoucherResult result = ClientHolder.get().getVoucher(title, count, offset, code);
                 if (Err.isFail(result.getError())) {
                     if (Err.isNetworkError(result.getError())) {
                         _Logger.error("Network error, get voucher");
