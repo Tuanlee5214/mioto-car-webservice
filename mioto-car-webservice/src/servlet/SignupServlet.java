@@ -86,9 +86,15 @@ public class SignupServlet extends BaseServlet {
             TLoginResult ret = ClientHolder.get().signup(sureq, ClientInfo.getLoginInfo(req));
 
             if (Err.isFail(ret.getError())) {
+                if(Err.isNetworkError(ret.getError()))
+                {
+                    _Logger.error("Network error (sign up)");
+                    fail(resp, HttpServletResponse.SC_SERVICE_UNAVAILABLE, Err.FAIL, "Lỗi kết nối mạng");
+                }
                 if (ret.getError() == Err.CONFLICT) {
-                    fail(resp, HttpServletResponse.SC_CONFLICT, Err.CONFLICT, "Số điện thoại này đã tồn tại");
+                    fail(resp, HttpServletResponse.SC_CONFLICT, Err.CONFLICT, ret.getMessage());
                 } else if (Err.isNetworkError(ret.getError())) {
+                    _Logger.error("Sign up failed");
                     fail(resp, HttpServletResponse.SC_INTERNAL_SERVER_ERROR, Err.FAIL, "Lỗi server");
                 }
                 return;

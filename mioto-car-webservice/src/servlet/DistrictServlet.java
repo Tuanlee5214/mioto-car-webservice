@@ -37,11 +37,11 @@ public class DistrictServlet extends AuthServlet {
             TListDistrictResult result = ClientHolder.get().getDistrict(provinceId, count, offset);
             if (Err.isFail(result.getError())) {
                 if (Err.isNetworkError(result.getError())) {
-                    _Logger.error("Network error(create district)");
+                    _Logger.error("Network error(get district)");
                     fail(resp, HttpServletResponse.SC_SERVICE_UNAVAILABLE, Err.FAIL, "Lỗi kết nối mạng");
                     return;
                 }
-                _Logger.error("Create district failed");
+                _Logger.error("get district failed");
                 fail(resp, HttpServletResponse.SC_INTERNAL_SERVER_ERROR, Err.FAIL, "Lỗi hệ thống");
                 return;
             }
@@ -55,7 +55,7 @@ public class DistrictServlet extends AuthServlet {
             fail(resp, HttpServletResponse.SC_BAD_REQUEST, Err.BAD_REQUEST, "Tham số không đúng định dạng");
             return;
         } catch (Exception e) {
-            _Logger.error("district create failed", e);
+            _Logger.error("district get failed", e);
             fail(resp, HttpServletResponse.SC_INTERNAL_SERVER_ERROR, Err.FAIL, "Lỗi hệ thống");
         }
     }
@@ -152,7 +152,7 @@ public class DistrictServlet extends AuthServlet {
                 if(Err.isNotFound(result.getError()))
                 {
                     _Logger.info("Notfound, update district");
-                    fail(resp, HttpServletResponse.SC_NOT_FOUND, Err.BAD_REQUEST, "Không tìm thấy quận/huyện để cập nhật");
+                    fail(resp, HttpServletResponse.SC_NOT_FOUND, Err.NOT_FOUND, "Không tìm thấy quận/huyện để cập nhật");
                     return;
                 }
                 _Logger.error("updated district failed");
