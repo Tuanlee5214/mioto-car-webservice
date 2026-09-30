@@ -9,12 +9,8 @@ import java.io.IOException;
 import javax.servlet.ServletException;
 import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
-import thrift.TSessionResult;
 import thrift.TUser;
 import thrift.TUserResult;
-import util.ClientHolder;
-import util.CookieSigner;
-import util.CookieUtil;
 
 /**
  *
@@ -23,7 +19,7 @@ import util.CookieUtil;
 public class AuthServlet extends BaseServlet {
     
     private static final long serialVersionUID = 1L;
-
+    protected static final String ROLE_ADMIN = "Admin";
     public static final String ATTR_USER    = "auth.user";
     public static final String ATTR_SESSION_ID = "auth.sessionId";
 
@@ -70,6 +66,18 @@ public class AuthServlet extends BaseServlet {
     protected TUser getUserFromRequest(HttpServletRequest req) {
         TUser v = (TUser) req.getAttribute(ATTR_USER);
         return v == null ? null : new TUser(v);
+    }
+    
+    protected boolean isAdmin(HttpServletRequest req, HttpServletResponse resp) {
+        TUser user = getUserFromRequest(req);
+        if (user != null && ROLE_ADMIN.equals(user.getRole())) {
+            return true;
+        }
+        _Logger.error("Forbidden, userId=" + (user == null ? "unknown" : user.getUserId())
+                + ", " + req.getMethod() + " " + req.getRequestURI());
+        fail(resp, HttpServletResponse.SC_FORBIDDEN, Err.FORBIDDEN,
+                "Bạn không có quyền thực hiện hành động này");
+        return false;
     }
     
 }

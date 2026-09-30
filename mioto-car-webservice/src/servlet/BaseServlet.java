@@ -29,7 +29,6 @@ import util.CookieUtil;
 public class BaseServlet extends HttpServlet{
     private static final long serialVersionUID = 1L;
     protected static final Logger _Logger = Logger.getLogger(BaseServlet.class);
-
     protected static final Gson GSON = new Gson();
 
     @Override
@@ -143,5 +142,20 @@ public class BaseServlet extends HttpServlet{
         resp.setHeader("Access-Control-Allow-Methods", "GET, POST, PUT, DELETE, OPTIONS");
         resp.setHeader("Access-Control-Allow-Headers", "Content-Type, Authorization");
     }
-
+    
+    protected Integer parseIdFromRequest(HttpServletRequest req)
+    {
+        String ret = req.getPathInfo();
+        if(ret == null || "/".equals(ret)) 
+        {
+            return 0;
+        }
+        try {
+            int id = Integer.parseInt(ret.substring(1));
+            return id > 0 ? id : null;
+        } 
+        catch (NumberFormatException e) {
+            return null;
+        }
+    }
 }
