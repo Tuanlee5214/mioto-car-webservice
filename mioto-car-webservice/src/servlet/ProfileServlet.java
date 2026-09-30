@@ -23,7 +23,7 @@ import util.ClientHolder;
 public class ProfileServlet extends AuthServlet {
     private static final Pattern EMAIL_PATTERN = Pattern.compile("^[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\\.[a-zA-Z]{2,}$");
 
-    @Override
+        @Override
     protected void doPost(HttpServletRequest req, HttpServletResponse resp)
     {
         try
@@ -75,9 +75,18 @@ public class ProfileServlet extends AuthServlet {
             TUserResult ret = ClientHolder.get().getUser(getUserFromRequest(req).getUserId());
             if(Err.isFail(ret.getError()))
             {
-                _Logger.info("User not found");
-                fail(resp, HttpServletResponse.SC_NOT_FOUND, Err.NOT_FOUND, "Không tìm thấy người dùng này");
-                return;
+                if(Err.isNetworkError(ret.getError()))
+                {
+                    _Logger.info("Network error");
+                    fail(resp, HttpServletResponse.SC_SERVICE_UNAVAILABLE, Err.FAIL, "Lỗi kết nối mạng");
+                    return;
+                }
+                if(Err.isNotFound(ret.getError()))
+                {
+                    _Logger.info("Notfound error");
+                    fail(resp, HttpServletResponse.SC_NOT_FOUND, Err.FAIL, "Không tìm thấy người dùng này");
+                    return;
+                }
             }
             
             TUser result = ret.getValue();

@@ -170,7 +170,7 @@ public class ProvinceServlet extends AuthServlet {
             }
             ok(resp, result.getValue());
         } catch (Exception e) {
-            _Logger.error("updated province failed");
+            _Logger.error("updated province failed", e);
             fail(resp, HttpServletResponse.SC_INTERNAL_SERVER_ERROR, Err.FAIL, "Lỗi hệ thống");
         }
     }
@@ -198,7 +198,7 @@ public class ProvinceServlet extends AuthServlet {
                 }
                 if (Err.isNotFound(result.getError())) {
                     _Logger.info("Notfound, delete province");
-                    fail(resp, HttpServletResponse.SC_NOT_FOUND, Err.BAD_REQUEST, "Không tìm thấy tỉnh/thành phố để xóa");
+                    fail(resp, HttpServletResponse.SC_NOT_FOUND, Err.NOT_FOUND, "Không tìm thấy tỉnh/thành phố để xóa");
                     return;
                 }
                 _Logger.error("Deleted province failed");
