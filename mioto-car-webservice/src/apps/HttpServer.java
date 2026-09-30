@@ -10,12 +10,19 @@ import org.eclipse.jetty.server.handler.ContextHandler;
 import org.eclipse.jetty.server.handler.HandlerList;
 import org.eclipse.jetty.server.handler.ResourceHandler;
 import org.eclipse.jetty.servlet.ServletHandler;
+import servlet.CarBrandServlet;
+import servlet.DistrictServlet;
+import servlet.FeatureServlet;
+import servlet.FeePolicyServlet;
+import servlet.FeedBackServlet;
 import servlet.HealthServlet;
 import servlet.LoginServlet;
 import servlet.LogoutServlet;
 import servlet.MeServlet;
 import servlet.ProfileServlet;
+import servlet.ProvinceServlet;
 import servlet.SignupServlet;
+import servlet.VoucherServlet;
 import util.Config;
     
 /**
@@ -38,9 +45,16 @@ public class HttpServer {
         servlets.addServletWithMapping(SignupServlet.class,  "/api/signup");
         servlets.addServletWithMapping(LoginServlet.class,   "/api/login");
         servlets.addServletWithMapping(LogoutServlet.class,  "/api/logout");
-        servlets.addServletWithMapping(ProfileServlet.class, "/api/profile");
+        servlets.addServletWithMapping(ProfileServlet.class, "/api/profiles");
         servlets.addServletWithMapping(MeServlet.class, "/api/checkauth");
-
+        servlets.addServletWithMapping(CarBrandServlet.class, "/api/car-brands/*");
+        servlets.addServletWithMapping(DistrictServlet.class, "/api/districts/*");
+        servlets.addServletWithMapping(FeatureServlet.class, "/api/features/*");
+        servlets.addServletWithMapping(FeePolicyServlet.class, "/api/fee-policies/*");
+        servlets.addServletWithMapping(FeedBackServlet.class, "/api/feedbacks/*");
+        servlets.addServletWithMapping(ProvinceServlet.class, "/api/provinces/*");
+        servlets.addServletWithMapping(VoucherServlet.class, "/api/vouchers/*");
+        
         // 2. static files from ./public served at /static
         ContextHandler statics = new ContextHandler("/static");
         statics.setResourceBase(Config.getString(HttpServer.class, "web", "resource", "./public"));
