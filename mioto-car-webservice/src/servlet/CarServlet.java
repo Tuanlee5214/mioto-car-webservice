@@ -117,7 +117,7 @@ public class CarServlet extends AuthServlet {
                 result = ClientHolder.get().getCarViewByUserId((int) user.getUserId(), count, offset);
             } // ---------- GET /api/cars  và  GET /api/cars/admin ----------
             else {  
-                if ("/admin".equals(path) && !isAdmin(req, resp)) {
+                if ("/admin".equals(path)) {
                     return;
                 }
                 TCarFilterRequest filter = new TCarFilterRequest();
@@ -467,9 +467,7 @@ public class CarServlet extends AuthServlet {
 
             // ---------- PUT /api/cars/{id}/status (admin) ----------
             if (seg.length == 2 && "status".equals(seg[1])) {
-                if (!isAdmin(req, resp)) {
-                    return;
-                }
+                if(!hasRole(req, resp, Role.CAR_WRITE)) return;
                 String statusFromParam = param(req, body, "status");
                 String userIdFromParam = param(req, body, "userId");
                 if (statusFromParam == null || statusFromParam.trim().isEmpty()) {

@@ -11,7 +11,6 @@ import java.util.List;
 import java.util.Map;
 import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
-import role.Role;
 import thrift.TCarFeature;
 import thrift.TListCarFeatureViewResult;
 import thrift.TUser;
@@ -42,8 +41,8 @@ public class CarFeatureServlet extends AuthServlet {
                 return;
             }
 
-            Object rawFeatures = body == null ? null : body.get("features");
-            if (!(rawFeatures instanceof List) || ((List<?>) rawFeatures).isEmpty() || ((List<?>) rawFeatures).size() > 100) {
+            Object rawFeatures = body == null ? null : body.get("featureIds");
+            if (rawFeatures == null || !(rawFeatures instanceof List) || ((List<?>) rawFeatures).isEmpty() || ((List<?>) rawFeatures).size() > 100) {
                 _Logger.info("Bad request features");
                 fail(resp, HttpServletResponse.SC_BAD_REQUEST, Err.BAD_REQUEST, "Danh sách tính năng không hợp lệ");
                 return;
@@ -110,7 +109,7 @@ public class CarFeatureServlet extends AuthServlet {
             }
 
             Object rawIds = body == null ? null : body.get("carFeatureIds");
-            if (!(rawIds instanceof List) || ((List<?>) rawIds).isEmpty() || ((List<?>) rawIds).size() > 100) {
+            if (rawIds == null || !(rawIds instanceof List) || ((List<?>) rawIds).isEmpty() || ((List<?>) rawIds).size() > 100) {
                 _Logger.info("Bad request carFeatureIds");
                 fail(resp, HttpServletResponse.SC_BAD_REQUEST, Err.BAD_REQUEST, "Danh sách tính năng cần xóa không hợp lệ");
                 return;

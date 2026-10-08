@@ -29,6 +29,7 @@ public class CarImageServlet extends AuthServlet {
         try {
             TUser user = getUserFromRequest(req);
             Map<String, Object> body = jsonBody(req);
+            _Logger.info("DEBUG body = " + body + ", carId = " + param(req, body, "carId"));           
             String carIdFromParam = param(req, body, "carId");
             if (carIdFromParam == null) {
                 _Logger.info("Bad request carId");
@@ -43,7 +44,7 @@ public class CarImageServlet extends AuthServlet {
             }
 
             Object rawImages = body == null ? null : body.get("images");
-            if (!(rawImages instanceof List) || ((List<?>) rawImages).isEmpty() || ((List<?>) rawImages).size() > 5) {
+            if (rawImages == null || !(rawImages instanceof List) || ((List<?>) rawImages).isEmpty() || ((List<?>) rawImages).size() > 5) {
                 _Logger.info("Bad request images");
                 fail(resp, HttpServletResponse.SC_BAD_REQUEST, Err.BAD_REQUEST, "Mỗi lần thêm từ 1 đến 5 ảnh");
                 return;
@@ -119,7 +120,7 @@ public class CarImageServlet extends AuthServlet {
             }
 
             Object rawIds = body == null ? null : body.get("imageIds");
-            if (!(rawIds instanceof List) || ((List<?>) rawIds).isEmpty() || ((List<?>) rawIds).size() > 100) {
+            if (rawIds == null || !(rawIds instanceof List) || ((List<?>) rawIds).isEmpty() || ((List<?>) rawIds).size() > 100) {
                 _Logger.info("Bad request imageIds");
                 fail(resp, HttpServletResponse.SC_BAD_REQUEST, Err.BAD_REQUEST, "Danh sách ảnh cần xóa không hợp lệ");
                 return;
