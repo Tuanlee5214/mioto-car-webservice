@@ -27,7 +27,7 @@ public class FeedBackServlet extends AuthServlet {
     protected void doGet(HttpServletRequest req, HttpServletResponse resp) {
         try {
             Integer receiverId = parseIdFromRequest(req);
-            if (receiverId == null || receiverId <= 0) {
+            if (receiverId == null || receiverId < 0) {
                 _Logger.info("Bad request receiverId id : " + receiverId);
                 fail(resp, HttpServletResponse.SC_BAD_REQUEST, Err.BAD_REQUEST, "Id không hợp lệ");
                 return;
@@ -223,7 +223,7 @@ public class FeedBackServlet extends AuthServlet {
                 fail(resp, HttpServletResponse.SC_INTERNAL_SERVER_ERROR, Err.FAIL, "Lỗi hệ thống");
                 return;
             }
-            ok(resp, new TFeedBack());
+            ok(resp, "Xóa dữ liệu thành công");
         } catch (Exception e) {
             _Logger.error("delete feedback failed", e);
             fail(resp, HttpServletResponse.SC_INTERNAL_SERVER_ERROR, Err.FAIL, "Lỗi hệ thống");

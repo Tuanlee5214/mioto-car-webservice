@@ -207,6 +207,7 @@ public class VoucherServlet extends AuthServlet {
                 fail(resp, HttpServletResponse.SC_INTERNAL_SERVER_ERROR, Err.FAIL, "Lỗi hệ thống");
                 return;
             }
+            ok(resp, result.getValue());
         } catch (NumberFormatException e) {
             _Logger.info("input is incorrect format", e);
             fail(resp, HttpServletResponse.SC_BAD_REQUEST, Err.BAD_REQUEST, "Tham số không đúng định dạng");
@@ -381,7 +382,7 @@ public class VoucherServlet extends AuthServlet {
                 fail(resp, HttpServletResponse.SC_INTERNAL_SERVER_ERROR, Err.FAIL, "Lỗi hệ thống");
                 return;
             }
-            ok(resp, new TVoucherResult());
+            ok(resp, "Xóa dữ liệu thành công");
         } catch (Exception e) {
             _Logger.error("Delete voucher failed");
             fail(resp, HttpServletResponse.SC_INTERNAL_SERVER_ERROR, Err.FAIL, "Lỗi hệ thống");

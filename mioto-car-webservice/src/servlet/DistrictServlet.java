@@ -194,7 +194,7 @@ public class DistrictServlet extends AuthServlet {
                 fail(resp, HttpServletResponse.SC_INTERNAL_SERVER_ERROR, Err.FAIL, "Lỗi hệ thống");
                 return;
             }
-            ok(resp, new TDistrict());
+            ok(resp, "Xóa dữ liệu thành công");
 
         } catch (Exception e) {
             _Logger.error("district delete failed", e);

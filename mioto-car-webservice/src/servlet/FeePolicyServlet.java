@@ -267,7 +267,7 @@ public class FeePolicyServlet extends AuthServlet {
                 fail(resp, HttpServletResponse.SC_INTERNAL_SERVER_ERROR, Err.FAIL, "Lỗi hệ thống");
                 return;
             }
-            ok(resp, new TFeePolicy());
+            ok(resp, "Xóa dữ liệu thành công");
 
         } catch (Exception e) {
             _Logger.error("feepolicy delete failed", e);

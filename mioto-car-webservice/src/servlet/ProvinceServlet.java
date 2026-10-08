@@ -208,7 +208,7 @@ public class ProvinceServlet extends AuthServlet {
                 fail(resp, HttpServletResponse.SC_INTERNAL_SERVER_ERROR, Err.FAIL, "Lỗi hệ thống");
                 return;
             }
-            ok(resp, new TProvince());
+            ok(resp, "Xóa dữ liệu thành công");
 
         } catch (Exception e) {
             _Logger.error("province delete failed", e);

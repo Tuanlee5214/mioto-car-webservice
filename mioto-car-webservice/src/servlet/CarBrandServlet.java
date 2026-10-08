@@ -67,7 +67,7 @@ public class CarBrandServlet extends AuthServlet {
                         return;
                     } else if (Err.isNotFound(ret.getError())) {
                         _Logger.info("Notfound error (get car brand by id)");
-                        fail(resp, HttpServletResponse.SC_NOT_FOUND, Err.FAIL, "Không tìm thấy hãng xe này");
+                        fail(resp, HttpServletResponse.SC_NOT_FOUND, Err.NOT_FOUND, "Không tìm thấy hãng xe này");
                         return;
                     } else {
                         _Logger.error("get car brand value failed");
@@ -221,7 +221,7 @@ public class CarBrandServlet extends AuthServlet {
                 fail(resp, HttpServletResponse.SC_INTERNAL_SERVER_ERROR, Err.FAIL, "Lỗi hệ thống");
                 return;
             }
-            ok(resp, new TCarBrand());
+            ok(resp, "Xóa dữ liệu thành công");
         } catch (Exception e) {
             _Logger.error("car brand delete failed", e);
             fail(resp, HttpServletResponse.SC_INTERNAL_SERVER_ERROR, Err.FAIL, "Lỗi hệ thống");
