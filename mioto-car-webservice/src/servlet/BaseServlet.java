@@ -5,6 +5,9 @@
 package servlet;
 
 import com.google.gson.Gson;
+import com.google.gson.GsonBuilder;
+import com.google.gson.ToNumberStrategy;
+import com.google.gson.stream.JsonReader;
 import error.Err;
 import java.io.BufferedReader;
 import java.io.IOException;
@@ -29,7 +32,23 @@ import util.CookieUtil;
 public class BaseServlet extends HttpServlet{
     private static final long serialVersionUID = 1L;
     protected static final Logger _Logger = Logger.getLogger(BaseServlet.class);
-    protected static final Gson GSON = new Gson();
+    protected static final Gson GSON = new GsonBuilder().setObjectToNumberStrategy(new ToNumberStrategy() {
+            @Override
+            public Number readNumber(JsonReader in) throws IOException {
+                String value = in.nextString();
+                try {
+                    long valueLong = Long.parseLong(value);
+                    if (valueLong >= Integer.MIN_VALUE && valueLong <= Integer.MAX_VALUE) {
+                        return (int) valueLong;
+                    }
+                    return valueLong; 
+                } catch (NumberFormatException e) {
+                    return Double.parseDouble(value);
+                }
+            }
+        })
+        .create();
+
 
     @Override
     protected void service(HttpServletRequest req, HttpServletResponse resp)
