@@ -61,52 +61,6 @@ public class AuthServlet extends BaseServlet {
         TUser v = (TUser) req.getAttribute(ATTR_USER);
         return v == null ? null : new TUser(v);
     }
-
-    protected boolean isAdmin(HttpServletRequest req, HttpServletResponse resp) {
-        TUser user = getUserFromRequest(req);
-        if (user != null && ROLE_ADMIN.equals(user.getRole())) {
-            return true;
-        }
-        _Logger.error("Forbidden, userId=" + (user == null ? "unknown" : user.getUserId())
-                + ", " + req.getMethod() + " " + req.getRequestURI());
-        fail(resp, HttpServletResponse.SC_FORBIDDEN, Err.FORBIDDEN,
-                "Bạn không có quyền thực hiện hành động này");
-        return false;
-    }
-
-    protected boolean isOwnerCar(HttpServletRequest req, HttpServletResponse resp) {
-        TUser user = getUserFromRequest(req);
-        if (user != null && ROLE_OWNER_CAR.equals(user.getRole())) {
-            return true;
-        }
-
-        _Logger.error("Forbidden, userId=" + (user == null ? "unknown" : user.getUserId())
-                + ", " + req.getMethod() + " " + req.getRequestURI());
-        fail(resp, HttpServletResponse.SC_FORBIDDEN, Err.FORBIDDEN,
-                "Bạn không có quyền thực hiện hành động này");
-        return false;
-    }
-
-    protected boolean isSuperAdmin(HttpServletRequest req, HttpServletResponse resp) {
-        TUser user = getUserFromRequest(req);
-        if (user != null) {
-            TUserRoleResult result = ClientHolder.get().getUserRole((int) user.getUserId());
-            if (Err.isNetworkError(result.getError())) {
-                _Logger.error("Network error, check super admin");
-                fail(resp, HttpServletResponse.SC_SERVICE_UNAVAILABLE, Err.FAIL, "Lỗi kết nối mạng");
-                return false;
-            }
-            if (Err.isSuccess(result.getError()) && result.getValue().isIsSuperAdmin()) {
-                return true;
-            }
-        }
-
-        _Logger.error("Forbidden, userId=" + (user == null ? "unknown" : user.getUserId())
-                + ", " + req.getMethod() + " " + req.getRequestURI());
-        fail(resp, HttpServletResponse.SC_FORBIDDEN, Err.FORBIDDEN,
-                "Bạn không có quyền thực hiện hành động này");
-        return false;
-    }
     
     protected boolean hasRole(HttpServletRequest req, HttpServletResponse resp, String role)
     {
