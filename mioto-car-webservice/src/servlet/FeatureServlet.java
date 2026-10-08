@@ -46,7 +46,7 @@ public class FeatureServlet extends AuthServlet {
                         fail(resp, HttpServletResponse.SC_SERVICE_UNAVAILABLE, Err.FAIL, "Lỗi kết nối mạng");
                         return;
                     }
-                    _Logger.error("get all car brand value failed");
+                    _Logger.error("get all feature value failed");
                     fail(resp, HttpServletResponse.SC_INTERNAL_SERVER_ERROR, Err.FAIL, "Lỗi hệ thống");
                     return;
                 }
@@ -208,7 +208,7 @@ public class FeatureServlet extends AuthServlet {
                 fail(resp, HttpServletResponse.SC_INTERNAL_SERVER_ERROR, Err.FAIL, "Lỗi hệ thống");
                 return;
             }
-            ok(resp, new TFeature());
+            ok(resp, "Xoá dữ liệu thành công");
         } catch (Exception e) {
             _Logger.error("feature delete failed", e);
             fail(resp, HttpServletResponse.SC_INTERNAL_SERVER_ERROR, Err.FAIL, "Lỗi hệ thống");
