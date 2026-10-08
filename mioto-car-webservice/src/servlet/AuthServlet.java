@@ -6,21 +6,26 @@ package servlet;
 
 import error.Err;
 import java.io.IOException;
+import java.util.List;
 import javax.servlet.ServletException;
 import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
+import thrift.TRole;
 import thrift.TUser;
 import thrift.TUserResult;
+import thrift.TUserRoleResult;
+import util.ClientHolder;
 
 /**
  *
  * @author tuanlee
  */
 public class AuthServlet extends BaseServlet {
-    
+
     private static final long serialVersionUID = 1L;
     protected static final String ROLE_ADMIN = "Admin";
-    public static final String ATTR_USER    = "auth.user";
+    protected static final String ROLE_OWNER_CAR = "OwnerCar";
+    public static final String ATTR_USER = "auth.user";
     public static final String ATTR_SESSION_ID = "auth.sessionId";
 
     @Override
@@ -29,45 +34,34 @@ public class AuthServlet extends BaseServlet {
 
         req.setCharacterEncoding("UTF-8");
         resp.setCharacterEncoding("UTF-8");
-        
+
         this.setCorsHeader(resp);
-        if("OPTIONS".equalsIgnoreCase(req.getMethod()))
-        {
+        if ("OPTIONS".equalsIgnoreCase(req.getMethod())) {
             super.service(req, resp);
             return;
         }
-        
+
         TUserResult result = getAuthenticatedUser(req, resp);
-        if(Err.isFail(result.getError()))
-        {
-            if(Err.isNetworkError(result.getError()))
-            {
+        if (Err.isFail(result.getError())) {
+            if (Err.isNetworkError(result.getError())) {
                 _Logger.error("Service unavailable");
                 fail(resp, HttpServletResponse.SC_SERVICE_UNAVAILABLE, result.getError(), "Lỗi server");
+            } else {
+                fail(resp, HttpServletResponse.SC_UNAUTHORIZED, Err.FAIL, "Bạn chưa đăng nhập");
             }
-            else fail(resp, HttpServletResponse.SC_UNAUTHORIZED, Err.FAIL, "Bạn chưa đăng nhập");
             return;
         }
-//        TSessionResult sessionResult = ClientHolder.get().getSession(CookieSigner.verify(CookieUtil.read(req)));
-//        String userAgentFromDB = sessionResult.getValue().getUserAgent();
-//        String userAgentFromCli = req.getHeader("User-Agent");
-//        if(!userAgentFromDB.equals(userAgentFromCli))
-//        {
-//            _Logger.error("UserAgent does not match");
-//            fail(resp, HttpServletResponse.SC_UNAUTHORIZED, Err.FAIL, "Bạn chưa đăng nhập");
-//            return;
-//        }
         //req.setAttribute(ATTR_SESSION_ID, Long.valueOf(sessionId));
         req.setAttribute(ATTR_USER, new TUser(result.getValue()));
-        
-        super.service(req, resp);                      
+
+        super.service(req, resp);
     }
 
     protected TUser getUserFromRequest(HttpServletRequest req) {
         TUser v = (TUser) req.getAttribute(ATTR_USER);
         return v == null ? null : new TUser(v);
     }
-    
+
     protected boolean isAdmin(HttpServletRequest req, HttpServletResponse resp) {
         TUser user = getUserFromRequest(req);
         if (user != null && ROLE_ADMIN.equals(user.getRole())) {
@@ -79,5 +73,73 @@ public class AuthServlet extends BaseServlet {
                 "Bạn không có quyền thực hiện hành động này");
         return false;
     }
+
+    protected boolean isOwnerCar(HttpServletRequest req, HttpServletResponse resp) {
+        TUser user = getUserFromRequest(req);
+        if (user != null && ROLE_OWNER_CAR.equals(user.getRole())) {
+            return true;
+        }
+
+        _Logger.error("Forbidden, userId=" + (user == null ? "unknown" : user.getUserId())
+                + ", " + req.getMethod() + " " + req.getRequestURI());
+        fail(resp, HttpServletResponse.SC_FORBIDDEN, Err.FORBIDDEN,
+                "Bạn không có quyền thực hiện hành động này");
+        return false;
+    }
+
+    protected boolean isSuperAdmin(HttpServletRequest req, HttpServletResponse resp) {
+        TUser user = getUserFromRequest(req);
+        if (user != null) {
+            TUserRoleResult result = ClientHolder.get().getUserRole((int) user.getUserId());
+            if (Err.isNetworkError(result.getError())) {
+                _Logger.error("Network error, check super admin");
+                fail(resp, HttpServletResponse.SC_SERVICE_UNAVAILABLE, Err.FAIL, "Lỗi kết nối mạng");
+                return false;
+            }
+            if (Err.isSuccess(result.getError()) && result.getValue().isIsSuperAdmin()) {
+                return true;
+            }
+        }
+
+        _Logger.error("Forbidden, userId=" + (user == null ? "unknown" : user.getUserId())
+                + ", " + req.getMethod() + " " + req.getRequestURI());
+        fail(resp, HttpServletResponse.SC_FORBIDDEN, Err.FORBIDDEN,
+                "Bạn không có quyền thực hiện hành động này");
+        return false;
+    }
     
+    protected boolean hasRole(HttpServletRequest req, HttpServletResponse resp, String role)
+    {
+        TUser user = getUserFromRequest(req);
+        if(user != null)
+        {
+            TUserRoleResult result = ClientHolder.get().getUserRole(user.getUserId());
+            if(Err.isNetworkError(result.getError()))
+            {
+                _Logger.error("Network error, check role " + role);
+                fail(resp, HttpServletResponse.SC_SERVICE_UNAVAILABLE, Err.FAIL, "Lỗi kết nối mạng");
+                return false;
+            }
+            
+            if(result.getValue() != null && result.getValue().isIsSuperAdmin()) return true;
+            
+            if(Err.isSuccess(result.getError()) && result.getValue() != null)
+            {
+                List<TRole> roles = result.getValue().getRoles() == null ? null : result.getValue().getRoles();
+                if(roles != null)
+                {
+                    for (TRole r : roles) {
+                        if (role.equals(r.getName())) {
+                            return true;
+                        }
+                    }
+                }
+            }
+        }
+        _Logger.info("Forbidden, userId=" + (user == null ? "unknown" : user.getUserId())
+                + ", " + req.getMethod() + " " + req.getRequestURI());
+        fail(resp, HttpServletResponse.SC_FORBIDDEN, Err.FORBIDDEN,
+                "Bạn không có quyền thực hiện hành động này");
+        return false;
+    }
 }
