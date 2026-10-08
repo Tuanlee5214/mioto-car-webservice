@@ -11,6 +11,10 @@ import org.eclipse.jetty.server.handler.HandlerList;
 import org.eclipse.jetty.server.handler.ResourceHandler;
 import org.eclipse.jetty.servlet.ServletHandler;
 import servlet.CarBrandServlet;
+import servlet.CarFeatureServlet;
+import servlet.CarImageServlet;
+import servlet.CarServlet;
+import servlet.CarUnavailServlet;
 import servlet.DistrictServlet;
 import servlet.FeatureServlet;
 import servlet.FeePolicyServlet;
@@ -21,7 +25,9 @@ import servlet.LogoutServlet;
 import servlet.MeServlet;
 import servlet.ProfileServlet;
 import servlet.ProvinceServlet;
+import servlet.RoleServlet;
 import servlet.SignupServlet;
+import servlet.UserRoleServlet;
 import servlet.VoucherServlet;
 import util.Config;
     
@@ -54,6 +60,12 @@ public class HttpServer {
         servlets.addServletWithMapping(FeedBackServlet.class, "/api/feedbacks/*");
         servlets.addServletWithMapping(ProvinceServlet.class, "/api/provinces/*");
         servlets.addServletWithMapping(VoucherServlet.class, "/api/vouchers/*");
+        servlets.addServletWithMapping(CarServlet.class, "/api/cars/*");
+        servlets.addServletWithMapping(CarImageServlet.class, "/api/car-images/*");
+        servlets.addServletWithMapping(CarFeatureServlet.class, "/api/car-features/*");
+        servlets.addServletWithMapping(CarUnavailServlet.class, "/api/car-unavails/*");  
+        servlets.addServletWithMapping(RoleServlet.class, "/api/roles/*");
+        servlets.addServletWithMapping(UserRoleServlet.class, "/api/user-roles");
         
         // 2. static files from ./public served at /static
         ContextHandler statics = new ContextHandler("/static");
