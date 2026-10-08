@@ -9,6 +9,7 @@ import java.util.LinkedHashMap;
 import java.util.Map;
 import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
+import role.Role;
 import thrift.TCarBrand;
 import thrift.TCarBrandResult;
 import thrift.TListCarBrandResult;
@@ -93,10 +94,8 @@ public class CarBrandServlet extends AuthServlet {
     @Override
     protected void doPost(HttpServletRequest req, HttpServletResponse resp) {
         try {
-            if (!isAdmin(req, resp)) {
-                return;
-            }
-
+            if(!hasRole(req, resp, Role.CAR_BRAND_WRITE)) return;
+            
             Map<String, Object> body = jsonBody(req);
             String nameBrand = param(req, body, "nameBrand");
             if (nameBrand == null || nameBrand.trim().isEmpty()) {
@@ -136,9 +135,7 @@ public class CarBrandServlet extends AuthServlet {
     @Override
     protected void doPut(HttpServletRequest req, HttpServletResponse resp) {
         try {
-            if (!isAdmin(req, resp)) {
-                return;
-            }
+            if(!hasRole(req, resp, Role.CAR_BRAND_WRITE)) return;
 
             Integer carBrandId = parseIdFromRequest(req);
             if (carBrandId == null || carBrandId <= 0) {
@@ -195,9 +192,7 @@ public class CarBrandServlet extends AuthServlet {
     @Override
     protected void doDelete(HttpServletRequest req, HttpServletResponse resp) {
         try {
-            if (!isAdmin(req, resp)) {
-                return;
-            }
+            if(!hasRole(req, resp, Role.CAR_BRAND_WRITE)) return;
 
             Integer carBrandId = parseIdFromRequest(req);
             if (carBrandId == null || carBrandId <= 0) {

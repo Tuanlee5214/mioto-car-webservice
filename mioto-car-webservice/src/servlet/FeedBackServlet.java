@@ -9,6 +9,7 @@ import java.util.LinkedHashMap;
 import java.util.Map;
 import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
+import role.Role;
 import static servlet.BaseServlet._Logger;
 import thrift.TFeedBack;
 import thrift.TFeedBackResult;
@@ -134,9 +135,7 @@ public class FeedBackServlet extends AuthServlet {
     @Override
     protected void doPut(HttpServletRequest req, HttpServletResponse resp) {
         try {
-            if (!isAdmin(req, resp)) {
-                return;
-            }
+            if (!hasRole(req, resp, Role.FEEDBACK_WRITE)) return;
             Integer feedbackId = parseIdFromRequest(req);
             if (feedbackId == null || feedbackId <= 0) {
                 _Logger.info("Bad request feedback id : " + feedbackId);
@@ -198,9 +197,7 @@ public class FeedBackServlet extends AuthServlet {
     @Override
     protected void doDelete(HttpServletRequest req, HttpServletResponse resp) {
         try {
-            if (!isAdmin(req, resp)) {
-                return;
-            }
+            if (!hasRole(req, resp, Role.FEEDBACK_WRITE)) return;
             Integer feedbackId = parseIdFromRequest(req);
             if (feedbackId == null || feedbackId <= 0) {
                 _Logger.info("Bad request feedback id : " + feedbackId);

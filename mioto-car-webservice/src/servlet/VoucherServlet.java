@@ -9,6 +9,7 @@ import java.util.LinkedHashMap;
 import java.util.Map;
 import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
+import role.Role;
 import thrift.TListVoucherResult;
 import thrift.TVoucher;
 import thrift.TVoucherResult;
@@ -93,9 +94,7 @@ public class VoucherServlet extends AuthServlet {
     @Override
     protected void doPost(HttpServletRequest req, HttpServletResponse resp) {
         try {
-            if (!isAdmin(req, resp)) {
-                return;
-            }
+            if (!hasRole(req, resp, Role.VOUCHER_WRITE)) return;
             Map<String, Object> body = jsonBody(req);
             String title = param(req, body, "title");
             String code = param(req, body, "code");
@@ -219,9 +218,7 @@ public class VoucherServlet extends AuthServlet {
     @Override
     protected void doPut(HttpServletRequest req, HttpServletResponse resp) {
         try {
-            if (!isAdmin(req, resp)) {
-                return;
-            }
+            if (!hasRole(req, resp, Role.VOUCHER_WRITE)) return;
             Integer voucherId = parseIdFromRequest(req);
             if (voucherId == null || voucherId <= 0) {
                 _Logger.info("Bad request voucherId " + voucherId);
@@ -358,9 +355,7 @@ public class VoucherServlet extends AuthServlet {
     @Override
     protected void doDelete(HttpServletRequest req, HttpServletResponse resp) {
         try {
-            if (!isAdmin(req, resp)) {
-                return;
-            }
+            if (!hasRole(req, resp, Role.VOUCHER_WRITE)) return;
             Integer voucherId = parseIdFromRequest(req);
             if (voucherId == null || voucherId <= 0) {
                 _Logger.info("Bad request voucherId " + voucherId);

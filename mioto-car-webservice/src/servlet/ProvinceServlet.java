@@ -9,6 +9,7 @@ import java.util.LinkedHashMap;
 import java.util.Map;
 import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
+import role.Role;
 import static servlet.BaseServlet._Logger;
 import thrift.TListProvinceResult;
 import thrift.TProvince;
@@ -85,9 +86,7 @@ public class ProvinceServlet extends AuthServlet {
     @Override
     protected void doPost(HttpServletRequest req, HttpServletResponse resp) {
         try {
-            if (!isAdmin(req, resp)) {
-                return;
-            }
+            if (!hasRole(req, resp, Role.PROVINCE_WRITE)) return;
 
             Map<String, Object> body = jsonBody(req);
             String nameProvince = param(req, body, "nameProvince");
@@ -125,9 +124,7 @@ public class ProvinceServlet extends AuthServlet {
     @Override
     protected void doPut(HttpServletRequest req, HttpServletResponse resp) {
         try {
-            if (!isAdmin(req, resp)) {
-                return;
-            }
+            if (!hasRole(req, resp, Role.PROVINCE_WRITE)) return;
 
             Integer provinceId = parseIdFromRequest(req);
             if (provinceId == null || provinceId <= 0) {
@@ -178,9 +175,7 @@ public class ProvinceServlet extends AuthServlet {
     @Override
     protected void doDelete(HttpServletRequest req, HttpServletResponse resp) {
         try {
-            if (!isAdmin(req, resp)) {
-                return;
-            }
+            if (!hasRole(req, resp, Role.PROVINCE_WRITE)) return;
 
             Integer provinceId = parseIdFromRequest(req);
             if (provinceId == null || provinceId <= 0) {

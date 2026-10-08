@@ -9,6 +9,7 @@ import java.util.LinkedHashMap;
 import java.util.Map;
 import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
+import role.Role;
 import thrift.TFeature;
 import thrift.TFeatureResult;
 import thrift.TListFeatureResult;
@@ -89,9 +90,7 @@ public class FeatureServlet extends AuthServlet {
     @Override
     protected void doPost(HttpServletRequest req, HttpServletResponse resp) {
         try {
-            if (!isAdmin(req, resp)) {
-                return;
-            }
+            if (!hasRole(req, resp, Role.FEATURE_WRITE)) return;
             Map<String, Object> body = jsonBody(req);
             String nameFeature = param(req, body, "nameFeature");
             if (nameFeature == null || nameFeature.trim().isEmpty()) {
@@ -131,9 +130,7 @@ public class FeatureServlet extends AuthServlet {
     @Override
     protected void doPut(HttpServletRequest req, HttpServletResponse resp) {
         try {
-            if (!isAdmin(req, resp)) {
-                return;
-            }
+            if (!hasRole(req, resp, Role.FEATURE_WRITE)) return;
             Integer featureId = parseIdFromRequest(req);
             if (featureId == null || featureId <= 0) {
                 _Logger.info("Bad request feature id : " + featureId);
@@ -185,9 +182,7 @@ public class FeatureServlet extends AuthServlet {
     @Override
     protected void doDelete(HttpServletRequest req, HttpServletResponse resp) {
         try {
-            if (!isAdmin(req, resp)) {
-                return;
-            }
+            if (!hasRole(req, resp, Role.FEATURE_WRITE)) return;
             Integer featureId = parseIdFromRequest(req);
             if (featureId == null || featureId <= 0) {
                 _Logger.info("Bad request feature id : " + featureId);

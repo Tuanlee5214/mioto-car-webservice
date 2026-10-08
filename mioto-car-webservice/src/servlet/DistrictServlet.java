@@ -9,6 +9,7 @@ import java.util.LinkedHashMap;
 import java.util.Map;
 import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
+import role.Role;
 import static servlet.BaseServlet._Logger;
 import thrift.TDistrict;
 import thrift.TDistrictResult;
@@ -63,10 +64,8 @@ public class DistrictServlet extends AuthServlet {
     @Override
     protected void doPost(HttpServletRequest req, HttpServletResponse resp) {
         try {
-            if (!isAdmin(req, resp)) {
-                return;
-            }
-
+            if(!hasRole(req, resp, Role.DISTRICT_WRITE)) return;
+            
             Map<String, Object> body = jsonBody(req);
             String nameDistrict = param(req, body, "nameDistrict");
             String provinceIdFromParam = param(req, body, "provinceId");
@@ -115,9 +114,7 @@ public class DistrictServlet extends AuthServlet {
     @Override
     protected void doPut(HttpServletRequest req, HttpServletResponse resp) {
         try {
-            if (!isAdmin(req, resp)) {
-                return;
-            }
+            if (!hasRole(req, resp, Role.DISTRICT_WRITE)) return;
 
             Integer districtId = parseIdFromRequest(req);
             if (districtId == null || districtId <= 0) {
@@ -170,9 +167,7 @@ public class DistrictServlet extends AuthServlet {
     @Override
     protected void doDelete(HttpServletRequest req, HttpServletResponse resp) {
         try {
-            if (!isAdmin(req, resp)) {
-                return;
-            }
+            if (!hasRole(req, resp, Role.DISTRICT_WRITE)) return;
 
             Integer districtId = parseIdFromRequest(req);
             if (districtId == null || districtId <= 0) {

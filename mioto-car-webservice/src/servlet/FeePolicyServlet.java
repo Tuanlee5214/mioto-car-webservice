@@ -10,6 +10,7 @@ import java.util.LinkedHashMap;
 import java.util.Map;
 import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
+import role.Role;
 import static servlet.BaseServlet._Logger;
 import thrift.TFeePolicy;
 import thrift.TFeePolicyResult;
@@ -89,9 +90,7 @@ public class FeePolicyServlet extends AuthServlet {
     @Override
     protected void doPost(HttpServletRequest req, HttpServletResponse resp) {
         try {
-            if (!isAdmin(req, resp)) {
-                return;
-            }
+            if (!hasRole(req, resp, Role.FEE_POLICY_WRITE)) return;
             Map<String, Object> body = jsonBody(req);
             String nameFeePolicy = param(req, body, "nameFeePolicy");
             String percentFeeFromParam = param(req, body, "percentFee");
@@ -160,9 +159,7 @@ public class FeePolicyServlet extends AuthServlet {
     @Override
     protected void doPut(HttpServletRequest req, HttpServletResponse resp) {
         try {
-            if (!isAdmin(req, resp)) {
-                return;
-            }
+            if (!hasRole(req, resp, Role.FEE_POLICY_WRITE)) return;
             Integer feePolicyId = parseIdFromRequest(req);
             if (feePolicyId == null || feePolicyId <= 0) {
                 _Logger.info("Bad request feature id : ");
@@ -244,9 +241,7 @@ public class FeePolicyServlet extends AuthServlet {
     @Override
     protected void doDelete(HttpServletRequest req, HttpServletResponse resp) {
         try {
-            if (!isAdmin(req, resp)) {
-                return;
-            }
+            if (!hasRole(req, resp, Role.FEE_POLICY_WRITE)) return;
             Integer feePolicyId = parseIdFromRequest(req);
             if (feePolicyId == null || feePolicyId <= 0) {
                 _Logger.info("Bad request feature id : ");
