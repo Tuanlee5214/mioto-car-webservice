@@ -37,6 +37,8 @@ public class ProvinceServlet extends AuthServlet {
                 String offsetFromParam = param(req, null, "offset");
                 int count = Integer.parseInt((countFromParam == null || countFromParam.trim().isEmpty()) ? "20" : countFromParam);
                 int offset = Integer.parseInt((offsetFromParam == null || offsetFromParam.trim().isEmpty()) ? "0" : offsetFromParam);
+                count = (count <= 0 || count > 100) ? 20 : count;
+                offset = Math.max(0, offset);
                 TListProvinceResult result = ClientHolder.get().getProvince(nameProvince, count, offset);
                 if (Err.isFail(result.getError())) {
                     if (Err.isNetworkError(result.getError())) {
@@ -77,7 +79,13 @@ public class ProvinceServlet extends AuthServlet {
                 data.put("nameProvince", result.getValue().getProvinceName());
                 ok(resp, data);
             }
-        } catch (Exception e) {
+        }
+        catch (NumberFormatException e) {
+            _Logger.info("input is incorrect format", e);
+            fail(resp, HttpServletResponse.SC_BAD_REQUEST, Err.BAD_REQUEST, "Tham số không đúng định dạng");
+            return;
+        }
+        catch (Exception e) {
             _Logger.error("province get failed", e);
             fail(resp, HttpServletResponse.SC_INTERNAL_SERVER_ERROR, Err.FAIL, "Lỗi hệ thống");
         }

@@ -37,6 +37,8 @@ public class FeatureServlet extends AuthServlet {
                 String offsetFromParam = param(req, null, "offset");
                 int count = Integer.parseInt((countFromParam == null || countFromParam.trim().isEmpty()) ? "20" : countFromParam);
                 int offset = Integer.parseInt((offsetFromParam == null || offsetFromParam.trim().isEmpty()) ? "0" : offsetFromParam);
+                count = (count <= 0 || count > 100) ? 20 : count;
+                offset = Math.max(0, offset);
                 TListFeatureResult result = ClientHolder.get().getFeature(nameFeature, count, offset);
                 if (Err.isFail(result.getError())) {
                     if (Err.isNetworkError(result.getError())) {

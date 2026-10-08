@@ -24,19 +24,22 @@ public class CarBrandServlet extends AuthServlet {
     @Override
     protected void doGet(HttpServletRequest req, HttpServletResponse resp) {
         try {
+            
             Integer carBrandId = parseIdFromRequest(req);
             if (carBrandId == null || carBrandId < 0) {
                 _Logger.info("Bad request car brand id : " + carBrandId);
                 fail(resp, HttpServletResponse.SC_BAD_REQUEST, Err.BAD_REQUEST, "Id không hợp lệ");
                 return;
             }
-
+            
             if (carBrandId == 0) {
                 String nameBrand = param(req, null, "nameBrand");
                 String countFromParam = param(req, null, "count");
                 String offsetFromParam = param(req, null, "offset");
                 int count = Integer.parseInt((countFromParam == null || countFromParam.trim().isEmpty()) ? "20" : countFromParam);
                 int offset = Integer.parseInt((offsetFromParam == null || offsetFromParam.trim().isEmpty()) ? "0" : offsetFromParam);
+                count = (count <= 0 || count > 100) ? 20 : count;
+                offset = Math.max(0, offset);
                 TListCarBrandResult ret = ClientHolder.get().getCarBrand(nameBrand, count, offset);
                 if (Err.isFail(ret.getError())) {
                     if (Err.isNetworkError(ret.getError())) {
@@ -55,6 +58,7 @@ public class CarBrandServlet extends AuthServlet {
                 data.put("offset", offset);
                 ok(resp, data);
             } else {
+                
                 TCarBrandResult ret = ClientHolder.get().getCarBrandById(carBrandId);
                 if (Err.isFail(ret.getError())) {
                     if (Err.isNetworkError(ret.getError())) {
