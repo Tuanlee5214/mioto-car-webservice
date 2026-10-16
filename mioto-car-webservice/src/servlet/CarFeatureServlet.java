@@ -20,7 +20,7 @@ import util.ClientHolder;
  *
  * @author tuanlee
  */
-public class CarFeatureServlet extends AuthServlet {
+public class CarFeatureServlet extends AuthWithoutGetServlet {
 
     // POST body: {"carId": 7, "features": [1, 2, 3]}
     @Override

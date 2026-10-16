@@ -20,7 +20,7 @@ import util.ClientHolder;
  *
  * @author tuanlee
  */
-public class CarUnavailServlet extends AuthServlet {
+public class CarUnavailServlet extends AuthWithoutGetServlet {
 
     // GET /api/car-unavails?carId=7
     @Override
@@ -93,14 +93,9 @@ public class CarUnavailServlet extends AuthServlet {
                 fail(resp, HttpServletResponse.SC_BAD_REQUEST, Err.BAD_REQUEST, "Xe không hợp lệ");
                 return;
             }
-            if (startTime <= 0) {
+            if (startTime <= 0 || endTime <= startTime || startTime < System.currentTimeMillis()) {
                 _Logger.info("Bad request startTime : " + startTime);
-                fail(resp, HttpServletResponse.SC_BAD_REQUEST, Err.BAD_REQUEST, "Thời gian bắt đầu không hợp lệ");
-                return;
-            }
-            if (endTime <= startTime) {
-                _Logger.info("Bad request endTime : " + endTime);
-                fail(resp, HttpServletResponse.SC_BAD_REQUEST, Err.BAD_REQUEST, "Thời gian kết thúc phải sau thời gian bắt đầu");
+                fail(resp, HttpServletResponse.SC_BAD_REQUEST, Err.BAD_REQUEST, "Thời gian không hợp lệ");
                 return;
             }
 

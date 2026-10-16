@@ -12,14 +12,19 @@ import error.Err;
 import java.io.BufferedReader;
 import java.io.IOException;
 import java.util.LinkedHashMap;
+import java.util.List;
 import java.util.Map;
 import javax.servlet.ServletException;
 import javax.servlet.http.HttpServlet;
 import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
 import org.apache.log4j.Logger;
+import static servlet.AuthServlet.ATTR_USER;
 import thrift.TLoginInfo;
+import thrift.TRole;
+import thrift.TUser;
 import thrift.TUserResult;
+import thrift.TUserRoleResult;
 import util.ClientHolder;
 import util.ClientInfo;
 import util.CookieSigner;
@@ -31,6 +36,9 @@ import util.CookieUtil;
  */
 public class BaseServlet extends HttpServlet{
     private static final long serialVersionUID = 1L;
+    public static final String ATTR_USER = "auth.user";
+    public static final String ATTR_SESSION_ID = "auth.sessionId";
+
     protected static final Logger _Logger = Logger.getLogger(BaseServlet.class);
     protected static final Gson GSON = new GsonBuilder().setObjectToNumberStrategy(new ToNumberStrategy() {
             @Override
@@ -176,5 +184,52 @@ public class BaseServlet extends HttpServlet{
         catch (NumberFormatException e) {
             return null;
         }
+    }
+        protected TUser getUserFromRequest(HttpServletRequest req) {
+        TUser v = (TUser) req.getAttribute(ATTR_USER);
+        return v == null ? null : new TUser(v);
+    }
+    
+    protected boolean hasRole(HttpServletRequest req, HttpServletResponse resp, String role)
+    {
+        TUser user = getUserFromRequest(req);
+        if(user != null)
+        {
+            TUserRoleResult result = ClientHolder.get().getUserRole(user.getUserId());
+            if(Err.isNetworkError(result.getError()))
+            {
+                _Logger.error("Network error, check role " + role);
+                fail(resp, HttpServletResponse.SC_SERVICE_UNAVAILABLE, Err.FAIL, "Lỗi kết nối mạng");
+                return false;
+            }
+            
+            if(result.getValue() != null && result.getValue().isIsSuperAdmin()) return true;
+            
+            if(Err.isSuccess(result.getError()) && result.getValue() != null)
+            {
+                List<TRole> roles = result.getValue().getRoles() == null ? null : result.getValue().getRoles();
+                if(roles != null)
+                {
+                    for (TRole r : roles) {
+                        if (role.equals(r.getName())) {
+                            return true;
+                        }
+                    }
+                }
+            }
+        }
+        _Logger.info("Forbidden, userId=" + (user == null ? "unknown" : user.getUserId())
+                + ", " + req.getMethod() + " " + req.getRequestURI());
+        fail(resp, HttpServletResponse.SC_FORBIDDEN, Err.FORBIDDEN,
+                "Bạn không có quyền thực hiện hành động này");
+        return false;
+    }
+    
+    protected boolean requireAuth(HttpServletRequest req) {
+        if (!"GET".equalsIgnoreCase(req.getMethod())) {
+            return true;
+        }
+        String path = req.getPathInfo();
+        return "/mine".equals(path) || "/admin".equals(path);
     }
 }

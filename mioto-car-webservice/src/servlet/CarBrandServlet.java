@@ -19,7 +19,7 @@ import util.ClientHolder;
  *
  * @author tuanlee
  */
-public class CarBrandServlet extends AuthServlet {
+public class CarBrandServlet extends AuthWithoutGetServlet {
 
     @Override
     protected void doGet(HttpServletRequest req, HttpServletResponse resp) {

@@ -20,7 +20,7 @@ import util.ClientHolder;
  *
  * @author tuanlee
  */
-public class ProvinceServlet extends AuthServlet {
+public class ProvinceServlet extends AuthWithoutGetServlet {
 
     @Override
     protected void doGet(HttpServletRequest req, HttpServletResponse resp) {

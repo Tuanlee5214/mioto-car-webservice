@@ -21,7 +21,7 @@ import util.ClientHolder;
  *
  * @author tuanlee
  */
-public class FeedBackServlet extends AuthServlet {
+public class FeedBackServlet extends AuthWithoutGetServlet {
 
     @Override
     protected void doGet(HttpServletRequest req, HttpServletResponse resp) {

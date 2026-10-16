@@ -19,7 +19,7 @@ import util.ClientHolder;
  *
  * @author tuanlee
  */
-public class FeatureServlet extends AuthServlet {
+public class FeatureServlet extends AuthWithoutGetServlet {
 
     @Override
     protected void doGet(HttpServletRequest req, HttpServletResponse resp) {
