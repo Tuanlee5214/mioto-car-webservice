@@ -11,4 +11,5 @@ package imageType;
 public class ImageType {
     public static final String CAR_TYPE = "cars";
     public static final String VOUCHER_TYPE = "vouchers";
+    public static final String PROFILE_TYPE = "profiles";
 }

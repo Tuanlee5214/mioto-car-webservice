@@ -5,7 +5,10 @@
 package servlet;
 
 import error.Err;
+import imageType.ImageType;
+import java.util.ArrayList;
 import java.util.LinkedHashMap;
+import java.util.List;
 import java.util.Map;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
@@ -15,6 +18,7 @@ import thrift.TUpdateUserResult;
 import thrift.TUser;
 import thrift.TUserResult;
 import util.ClientHolder;
+import util.ImageStorage;
 
 /**
  *
@@ -44,27 +48,122 @@ public class ProfileServlet extends AuthServlet {
                 return;
             }
             
+            String publicId = "";
+            Object rawImages = body == null ? null : body.get("images");
+            if (rawImages != null) {
+                if (!(rawImages instanceof List) || ((List<?>) rawImages).size() > 1) {
+                    fail(resp, HttpServletResponse.SC_BAD_REQUEST, Err.BAD_REQUEST, "Ảnh đại diện chỉ được phép có duy nhất 1 ảnh");
+                    return;
+                }
+                for (Object o : (List<?>) rawImages) {
+                    if (o instanceof Map && ((Map<?, ?>) o).get("publicId") != null) {
+                        publicId = String.valueOf(((Map<?, ?>) o).get("publicId")).trim();
+                    }
+                }
+            }
+            if (publicId.isEmpty()) {
+                fail(resp, HttpServletResponse.SC_BAD_REQUEST, Err.BAD_REQUEST, "Chưa chọn ảnh nào");
+                return;
+            }
+
+            TUserResult userResult = ClientHolder.get().getUser(getUserFromRequest(req).getUserId());
+            if (Err.isFail(userResult.getError())) {
+                if (Err.isNetworkError(userResult.getError())) {
+                    _Logger.error("Network error, get user");
+                    fail(resp, HttpServletResponse.SC_SERVICE_UNAVAILABLE, Err.FAIL, "Lỗi kết nối mạng");
+                    return;
+                }
+                if (Err.isNotFound(userResult.getError())) {
+                    _Logger.info("Notfound, get user");
+                    fail(resp, HttpServletResponse.SC_NOT_FOUND, Err.NOT_FOUND, "Không tìm thấy user");
+                    return;
+                }
+                _Logger.error("get user failed");
+                fail(resp, HttpServletResponse.SC_INTERNAL_SERVER_ERROR, Err.FAIL, "Lỗi hệ thống");
+                return;
+            }
+            String oldPublicId = null;
+            if (userResult.getValue() != null) {
+                oldPublicId = userResult.getValue().getPublicId();
+            }
+
+            boolean imageChanged = !publicId.equals(oldPublicId);
+            List<String> newIds = new ArrayList<String>();
+            if (imageChanged) {
+                if (!ImageStorage.isValidImageId(userResult.getValue().getUserId(), publicId)) {
+                    fail(resp, HttpServletResponse.SC_BAD_REQUEST, Err.BAD_REQUEST, "Thông tin ảnh không hợp lệ");
+                    return;
+                }
+                if (!ImageStorage.checkIsOwnImage(userResult.getValue().getUserId(), publicId)) {
+                    fail(resp, HttpServletResponse.SC_BAD_REQUEST, Err.BAD_REQUEST, "Bạn không phải là chủ của bức ảnh");
+                    return;
+                }
+                if (!ImageStorage.existsInTmp(publicId)) {
+                    fail(resp, HttpServletResponse.SC_BAD_REQUEST, Err.BAD_REQUEST, "Ảnh không tồn tại hoặc đã hết hạn, vui lòng tải lại");
+                    return;
+                }
+                newIds.add(publicId);
+                if (!ImageStorage.moveToFinal(ImageType.PROFILE_TYPE, newIds)) {
+                    _Logger.error("move images failed");
+                    fail(resp, HttpServletResponse.SC_INTERNAL_SERVER_ERROR, Err.FAIL, "Lỗi hệ thống");
+                    return;
+                }
+            }
+
+            
             TUser user = new TUser();
             user.setUserId(getUserFromRequest(req).getUserId());
             user.setDisplayName(name);
+            user.setPublicId(publicId);
             user.setEmail(email);
             user.setTimeUpdated(System.currentTimeMillis());
-            TUpdateUserResult ret = ClientHolder.get().updateUser(user);
             
-            if(Err.isFail(ret.getError()))
-            {
-                if(Err.isConflict(ret.getError()))
-                {
-                    fail(resp, HttpServletResponse.SC_CONFLICT, Err.CONFLICT, "Email này đã tồn tại trong hệ thống");
+            TUpdateUserResult result = null;
+            boolean saved = false;
+            try {
+                result = ClientHolder.get().updateUser(user);
+                saved = !Err.isFail(result.getError());
+            } finally {
+                if (!saved && imageChanged) {
+                    ImageStorage.moveBackToTmp(ImageType.PROFILE_TYPE, newIds);
+                }
+            }
+            if (Err.isFail(result.getError())) {
+                if (Err.isNetworkError(result.getError())) {
+                    _Logger.error("Network error, update user");
+                    fail(resp, HttpServletResponse.SC_SERVICE_UNAVAILABLE, Err.FAIL, "Lỗi kết nối mạng");
                     return;
                 }
-                _Logger.info("Update failed");
-                fail(resp, HttpServletResponse.SC_BAD_REQUEST, Err.FAIL, "Không thể cập nhật thông tin");
+                if (Err.isNotFound(result.getError())) {
+                    _Logger.info("Notfound, update user");
+                    fail(resp, HttpServletResponse.SC_NOT_FOUND, Err.NOT_FOUND, "Không tìm thấy user để cập nhật");
+                    return;
+                }
+                if (Err.isConflict(result.getError())) {
+                    _Logger.info("Conflict email");
+                    fail(resp, HttpServletResponse.SC_CONFLICT, Err.CONFLICT, "Email đã tồn tại");
+                    return;
+                }
+                _Logger.error("updated user failed");
+                fail(resp, HttpServletResponse.SC_INTERNAL_SERVER_ERROR, Err.FAIL, "Lỗi hệ thống");
                 return;
             }
-            
-            ok(resp, ret.value);
+
+            if (imageChanged && oldPublicId != null && !oldPublicId.isEmpty()) {
+                try {
+                    ImageStorage.deleteFromFinal(ImageType.PROFILE_TYPE, oldPublicId);
+                } catch (Exception e) {
+                    _Logger.error("delete old user image failed: " + oldPublicId, e);
+                }
+            }
+            if(result.getValue() != null) result.getValue().setImageUrl(ImageStorage.buildUrl(ImageType.PROFILE_TYPE, publicId));
+            ok(resp, result);
         }
+        catch (NumberFormatException e) {
+            _Logger.info("input is incorrect format", e);
+            fail(resp, HttpServletResponse.SC_BAD_REQUEST, Err.BAD_REQUEST, "Tham số không đúng định dạng");
+            return;
+        } 
         catch(Exception e)
         {
             _Logger.error("profile update failed", e);
@@ -92,6 +191,9 @@ public class ProfileServlet extends AuthServlet {
                     fail(resp, HttpServletResponse.SC_NOT_FOUND, Err.FAIL, "Không tìm thấy người dùng này");
                     return;
                 }
+                _Logger.error("Get user failed, System error");
+                fail(resp, HttpServletResponse.SC_INTERNAL_SERVER_ERROR, Err.FAIL, "Lỗi hệ thống");
+                return;
             }
             
             TUser result = ret.getValue();
@@ -99,8 +201,11 @@ public class ProfileServlet extends AuthServlet {
             data.put("userId", result.getUserId());
             data.put("phone", result.getPhone());
             data.put("email", result.getEmail());
+            data.put("publicId", result.getPublicId());
+            data.put("imageUrl", ImageStorage.buildUrl(ImageType.PROFILE_TYPE, result.getPublicId()));
             data.put("displayName", result.getDisplayName());
             data.put("status", result.getStatus());
+            data.put("createdAt", result.getTimeCreated());
             ok(resp, data);
         }
         catch(Exception e)
