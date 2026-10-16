@@ -76,6 +76,7 @@ public class FeatureServlet extends AuthWithoutGetServlet {
                 data.put("featureId", ret.getValue().getFeatureId());
                 data.put("nameFeature", ret.getValue().getNameFeature());
                 data.put("createdAt", ret.getValue().getCreatedAt());
+                data.put("iconKey", ret.getValue().getIconKey());
                 data.put("updatedAt", ret.getValue().getUpdatedAt());
                 ok(resp, data);
             }
@@ -95,13 +96,22 @@ public class FeatureServlet extends AuthWithoutGetServlet {
             if (!hasRole(req, resp, Role.FEATURE_WRITE)) return;
             Map<String, Object> body = jsonBody(req);
             String nameFeature = param(req, body, "nameFeature");
+            String iconKey = param(req, body, "iconKey");
             if (nameFeature == null || nameFeature.trim().isEmpty()) {
                 _Logger.info("Bad request nameFeature");
                 fail(resp, HttpServletResponse.SC_BAD_REQUEST, Err.BAD_REQUEST, "Tên tính năng không được để trống");
                 return;
             }
+            
+            if(iconKey == null || iconKey.trim().isEmpty())
+            {
+                _Logger.info("Bad request iconKey");
+                fail(resp, HttpServletResponse.SC_BAD_REQUEST, Err.BAD_REQUEST, "Icon tính năng không được bỏ trống");
+                return;
+            }
             TFeature feature = new TFeature();
             feature.setNameFeature(nameFeature.trim());
+            feature.setIconKey(iconKey.trim());
             feature.setCreatedAt(System.currentTimeMillis());
             feature.setUpdatedAt(System.currentTimeMillis());
             TFeatureResult result = ClientHolder.get().createFeature(feature);
@@ -147,10 +157,18 @@ public class FeatureServlet extends AuthWithoutGetServlet {
                 fail(resp, HttpServletResponse.SC_BAD_REQUEST, Err.BAD_REQUEST, "Tên tính năng không được để trống");
                 return;
             }
+            String iconKey = param(req, body, "iconKey");
+            if (iconKey == null || iconKey.trim().isEmpty()) {
+                _Logger.info("Bad request iconKey");
+                fail(resp, HttpServletResponse.SC_BAD_REQUEST, Err.BAD_REQUEST, "Icon tính năng không được bỏ trống");
+                return;
+            }
+
 
             TFeature feature = new TFeature();
             feature.setFeatureId(featureId);
             feature.setNameFeature(nameFeature.trim());
+            feature.setIconKey(iconKey.trim());
             feature.setUpdatedAt(System.currentTimeMillis());
             TFeatureResult result = ClientHolder.get().updateFeature(feature);
             if (Err.isFail(result.getError())) {
