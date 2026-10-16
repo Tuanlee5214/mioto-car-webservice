@@ -5,9 +5,11 @@
 package servlet;
 
 import error.Err;
+import imageType.ImageType;
 import java.math.BigDecimal;
 import java.util.ArrayList;
 import java.util.Calendar;
+import java.util.HashSet;
 import java.util.LinkedHashMap;
 import java.util.LinkedHashSet;
 import java.util.List;
@@ -67,6 +69,20 @@ public class CarServlet extends AuthServlet {
                     fail(resp, HttpServletResponse.SC_INTERNAL_SERVER_ERROR, Err.FAIL, "Lỗi hệ thống");
                     return;
                 }
+                
+                List<TCarImage> images = result.getValue().getImages();
+                if(images != null)
+                {
+                    for(TCarImage r : images)
+                    {
+                        if(r.getPublicId() == null) 
+                        {
+                            r.setImageUrl("");
+                            continue;
+                        }
+                        r.setImageUrl(ImageStorage.buildUrl(ImageType.CAR_TYPE ,r.getPublicId()));
+                    }
+                }
                 TCarView view = result.getValue().getCarView();
                 TCar car = view.getCar();
                 Map<String, Object> data = new LinkedHashMap<String, Object>();
@@ -90,7 +106,7 @@ public class CarServlet extends AuthServlet {
                 data.put("status", car.getStatus());
                 data.put("createdAt", car.getCreatedAt());
                 data.put("updatedAt", car.getUpdatedAt());
-                data.put("images", result.getValue().getImages() != null ? result.getValue().getImages() : new ArrayList<TCarImage>());
+                data.put("images", images);
                 data.put("features", result.getValue().getFeatures() != null ? result.getValue().getFeatures() : new ArrayList<TCarImage>());
                 data.put("unavails", result.getValue().getUnavails() != null ? result.getValue().getUnavails() : new ArrayList<TCarImage>());
                 ok(resp, data);
@@ -210,6 +226,17 @@ public class CarServlet extends AuthServlet {
                 return;
             }
             Map<String, Object> data = new LinkedHashMap<String, Object>();
+            if(result.getValue() != null)
+            {
+                for (TCarView r : result.getValue()) {
+                    if(r.getPublicId() == null) 
+                    {
+                        r.setImageUrl("");
+                        continue;
+                    }
+                    r.setImageUrl(ImageStorage.buildUrl(ImageType.CAR_TYPE ,r.getPublicId()));
+                }
+            }
             data.put("items", result.getValue());
             data.put("count", count);
             data.put("offset", offset);
@@ -353,34 +380,53 @@ public class CarServlet extends AuthServlet {
                 return;
             }
 
-            // images: [{"imageUrl": "...", "publicId": "..."}, ...]
+            // images: [{"publicId": "..."}, ...]
             List<TCarImage> images = new ArrayList<TCarImage>();
+            List<String> imageIds = new ArrayList<String>();
             Object rawImages = body == null ? null : body.get("images");
+
             if (rawImages != null) {
-                if (!(rawImages instanceof List) || ((List<?>) rawImages).size() > 5) {
-                    _Logger.info("Bad request images");
+                // phải là danh sách, tối đa 5 ảnh
+                if (!(rawImages instanceof List) || ((List<?>) rawImages).size() > ImageStorage.MAX_IMAGES) {
                     fail(resp, HttpServletResponse.SC_BAD_REQUEST, Err.BAD_REQUEST, "Danh sách ảnh không hợp lệ (tối đa 5 ảnh)");
                     return;
                 }
+
+                Set<String> seen = new HashSet<String>();
                 for (Object o : (List<?>) rawImages) {
-                    if (!(o instanceof Map)) {
-                        _Logger.info("Bad request image item");
+                    // lấy publicId từ từng phần tử
+                    String publicId = "";
+                    if (o instanceof Map && ((Map<?, ?>) o).get("publicId") != null) {
+                        publicId = String.valueOf(((Map<?, ?>) o).get("publicId")).trim();
+                    }
+
+                    // đúng định dạng và đúng chủ ảnh?
+                    if (!ImageStorage.isValidImageId(user.getUserId(), publicId)) {
                         fail(resp, HttpServletResponse.SC_BAD_REQUEST, Err.BAD_REQUEST, "Thông tin ảnh không hợp lệ");
                         return;
                     }
-                    Map<?, ?> m = (Map<?, ?>) o;
-                    String imageUrl = m.get("imageUrl") == null ? "" : String.valueOf(m.get("imageUrl")).trim();
-                    String publicId = m.get("publicId") == null ? "" : String.valueOf(m.get("publicId")).trim();
-                    if (imageUrl.isEmpty() || publicId.isEmpty() || imageUrl.length() > 255 || publicId.length() > 100) {
-                        _Logger.info("Bad request image item");
-                        fail(resp, HttpServletResponse.SC_BAD_REQUEST, Err.BAD_REQUEST, "Thông tin ảnh không hợp lệ");
+                    
+                    if(!ImageStorage.checkIsOwnImage(user.getUserId(), publicId))
+                    {
+                        fail(resp, HttpServletResponse.SC_BAD_REQUEST, Err.BAD_REQUEST, "Bạn không phải là chủ của bức ảnh");
                         return;
                     }
+                    // file có trong tmp không?
+                    if (!ImageStorage.existsInTmp(publicId)) {
+                        fail(resp, HttpServletResponse.SC_BAD_REQUEST, Err.BAD_REQUEST, "Ảnh không tồn tại hoặc đã hết hạn, vui lòng tải lại");
+                        return;
+                    }
+                    // trùng nhau không?
+                    if (!seen.add(publicId)) {
+                        fail(resp, HttpServletResponse.SC_BAD_REQUEST, Err.BAD_REQUEST, "Danh sách ảnh bị trùng");
+                        return;
+                    }
+
                     TCarImage image = new TCarImage();
-                    image.setImageUrl(imageUrl);
                     image.setPublicId(publicId);
                     image.setCreatedAt(System.currentTimeMillis());
                     images.add(image);
+                    imageIds.add(publicId);
                 }
             }
             // features: [1, 2, 3]
@@ -426,7 +472,22 @@ public class CarServlet extends AuthServlet {
             car.setCreatedAt(System.currentTimeMillis());
             car.setUpdatedAt(System.currentTimeMillis());
 
-            TCarResult result = ClientHolder.get().createCar(car, images, features);
+            if (!ImageStorage.moveToFinal(ImageType.CAR_TYPE ,imageIds)) {
+                _Logger.error("move images failed");
+                fail(resp, HttpServletResponse.SC_INTERNAL_SERVER_ERROR, Err.FAIL, "Lỗi hệ thống");
+                return;
+            }
+
+            TCarResult result = null;
+            boolean saved = false;
+            try {
+                result = ClientHolder.get().createCar(car, images, features);
+                saved = !Err.isFail(result.getError());
+            } finally {
+                if (!saved) {
+                    ImageStorage.moveBackToTmp(ImageType.CAR_TYPE ,imageIds);
+                }
+            }
             if (Err.isFail(result.getError())) {
                 if (Err.isNetworkError(result.getError())) {
                     _Logger.error("Network error, create car");
