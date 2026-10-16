@@ -81,6 +81,7 @@ public class CarBrandServlet extends AuthWithoutGetServlet {
                 Map<String, Object> data = new LinkedHashMap<String, Object>();
                 data.put("carBrandId", carBrand.getCarBrandId());
                 data.put("nameBrand", carBrand.getNameBrand());
+                data.put("iconKey", carBrand.getIconKey());
                 data.put("createdAt", carBrand.getCreatedAt());
                 data.put("updatedAt", carBrand.getUpdatedAt());
                 ok(resp, data);
@@ -107,9 +108,17 @@ public class CarBrandServlet extends AuthWithoutGetServlet {
                 fail(resp, HttpServletResponse.SC_BAD_REQUEST, Err.BAD_REQUEST, "Tên hãng xe không được để trống");
                 return;
             }
+            String iconKey = param(req, body, "iconKey");
+            if (iconKey == null || iconKey.trim().isEmpty()) {
+                _Logger.info("Bad request iconKey");
+                fail(resp, HttpServletResponse.SC_BAD_REQUEST, Err.BAD_REQUEST, "Icon hãng xe không được bỏ trống");
+                return;
+            }
+
 
             TCarBrand carBrand = new TCarBrand();
             carBrand.setNameBrand(nameBrand.trim());
+            carBrand.setIconKey(iconKey);
             carBrand.setUpdatedAt(System.currentTimeMillis());
             carBrand.setCreatedAt(System.currentTimeMillis());
             TCarBrandResult result = ClientHolder.get().createCarBrand(carBrand);
@@ -155,9 +164,16 @@ public class CarBrandServlet extends AuthWithoutGetServlet {
                 fail(resp, HttpServletResponse.SC_BAD_REQUEST, Err.BAD_REQUEST, "Tên hãng xe không được để trống");
                 return;
             }
-
+            
+            String iconKey = param(req, body, "iconKey");
+            if (iconKey == null || iconKey.trim().isEmpty()) {
+                _Logger.info("Bad request iconKey");
+                fail(resp, HttpServletResponse.SC_BAD_REQUEST, Err.BAD_REQUEST, "Icon hãng xe không được bỏ trống");
+                return;
+            }
             TCarBrand carBrand = new TCarBrand();
             carBrand.setCarBrandId(carBrandId);
+            carBrand.setIconKey(iconKey);
             carBrand.setNameBrand(nameBrand.trim());
             carBrand.setUpdatedAt(System.currentTimeMillis());
             TCarBrandResult result = ClientHolder.get().updateCarBrand(carBrand);
