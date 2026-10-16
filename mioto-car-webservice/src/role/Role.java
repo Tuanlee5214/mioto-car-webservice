@@ -43,4 +43,5 @@ public class Role {
     public static final String ROLE_WRITE = "role:write";
     public static final String USER_ROLE_READ = "user_role:read";
     public static final String USER_ROLE_WRITE = "user_role:write";
+    public static final String USER_LIST_READ  = "user_list:read";
 }

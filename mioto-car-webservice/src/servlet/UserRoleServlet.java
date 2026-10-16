@@ -25,14 +25,13 @@ public class UserRoleServlet extends AuthServlet {
     protected void doGet(HttpServletRequest req, HttpServletResponse resp) {
         try {
             TUser user = getUserFromRequest(req);
-            String userIdFromParam = param(req, null, "userId");
-            int userId = userIdFromParam == null ? (int) user.getUserId() : Integer.parseInt(userIdFromParam);
+            Integer userIdFromParam = parseIdFromRequest(req);
+            int userId = (userIdFromParam == null || userIdFromParam <= 0) ? user.getUserId() : userIdFromParam;
             if (userId <= 0) {
                 _Logger.info("Bad request userId : " + userId);
                 fail(resp, HttpServletResponse.SC_BAD_REQUEST, Err.BAD_REQUEST, "Người dùng không hợp lệ");
                 return;
             }
-            if (!hasRole(req, resp, Role.USER_ROLE_READ)) return;
             TUserRoleResult result = ClientHolder.get().getUserRole(userId);
             if (Err.isFail(result.getError())) {
                 if (Err.isNetworkError(result.getError())) {
