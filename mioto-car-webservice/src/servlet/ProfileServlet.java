@@ -53,6 +53,11 @@ public class ProfileServlet extends AuthServlet {
             
             if(Err.isFail(ret.getError()))
             {
+                if(Err.isConflict(ret.getError()))
+                {
+                    fail(resp, HttpServletResponse.SC_CONFLICT, Err.CONFLICT, "Email này đã tồn tại trong hệ thống");
+                    return;
+                }
                 _Logger.info("Update failed");
                 fail(resp, HttpServletResponse.SC_BAD_REQUEST, Err.FAIL, "Không thể cập nhật thông tin");
                 return;
