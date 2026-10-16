@@ -31,12 +31,13 @@ import thrift.TTransmission;
 import thrift.TTypeFuel;
 import thrift.TUser;
 import util.ClientHolder;
+import util.ImageStorage;
 
 /**
  *
  * @author tuanlee
  */
-public class CarServlet extends AuthServlet {
+public class CarServlet extends AuthWithoutGetServlet {
 
     @Override
     protected void doGet(HttpServletRequest req, HttpServletResponse resp) {
@@ -130,12 +131,14 @@ public class CarServlet extends AuthServlet {
             // ---------- GET /api/cars/mine ----------
             if ("/mine".equals(path)) {
                 TUser user = getUserFromRequest(req);
+                if(user == null)
+                {
+                    fail(resp, HttpServletResponse.SC_UNAUTHORIZED, Err.FAIL, "Bạn chưa đăng nhập");
+                    return;
+                }
                 result = ClientHolder.get().getCarViewByUserId((int) user.getUserId(), count, offset);
             } // ---------- GET /api/cars  và  GET /api/cars/admin ----------
             else {  
-                if ("/admin".equals(path)) {
-                    return;
-                }
                 TCarFilterRequest filter = new TCarFilterRequest();
                 String carName = param(req, null, "carName");
                 String productionYear = param(req, null, "productionYear");
@@ -195,6 +198,8 @@ public class CarServlet extends AuthServlet {
                 }
 
                 if ("/admin".equals(path)) {
+                    _Logger.info("admin search, allowed=");
+
                     if(!hasRole(req, resp, Role.CAR_READ)) return;
                     int status = statusFromParam == null ? 0 : Integer.parseInt(statusFromParam);   // 0 = tất cả
                     if (status != 0 && TCarStatus.findByValue(status) == null) {
@@ -530,33 +535,20 @@ public class CarServlet extends AuthServlet {
             if (seg.length == 2 && "status".equals(seg[1])) {
                 if(!hasRole(req, resp, Role.CAR_WRITE)) return;
                 String statusFromParam = param(req, body, "status");
-                String userIdFromParam = param(req, body, "userId");
                 if (statusFromParam == null || statusFromParam.trim().isEmpty()) {
                     _Logger.info("Bad request status");
                     fail(resp, HttpServletResponse.SC_BAD_REQUEST, Err.BAD_REQUEST, "Trạng thái không được để trống");
                     return;
                 }
-                if (userIdFromParam == null || statusFromParam.trim().isEmpty()) {
-                    _Logger.info("Bad request userId");
-                    fail(resp, HttpServletResponse.SC_BAD_REQUEST, Err.BAD_REQUEST, "Chủ xe không được để trống");
-                    return;
-                }
                 int status = Integer.parseInt(statusFromParam);
-                int userId = Integer.parseInt(userIdFromParam);
                 if (TCarStatus.findByValue(status) == null) {
                     _Logger.info("Bad request status : " + status);
                     fail(resp, HttpServletResponse.SC_BAD_REQUEST, Err.BAD_REQUEST, "Trạng thái không hợp lệ");
                     return;
                 }
-                if (userId <= 0) {
-                    _Logger.info("Bad request userId : " + userId);
-                    fail(resp, HttpServletResponse.SC_BAD_REQUEST, Err.BAD_REQUEST, "Chủ xe không hợp lệ");
-                    return;
-                }
 
                 TCar car = new TCar();
                 car.setCarId(carId);
-                car.setUserId(userId);
                 car.setStatus(status);
                 TCarResult result = ClientHolder.get().updateStatusCar(car);
                 if (Err.isFail(result.getError())) {
