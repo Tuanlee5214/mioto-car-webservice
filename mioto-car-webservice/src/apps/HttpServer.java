@@ -20,6 +20,7 @@ import servlet.FeatureServlet;
 import servlet.FeePolicyServlet;
 import servlet.FeedBackServlet;
 import servlet.HealthServlet;
+import servlet.ImageUploadServlet;
 import servlet.LoginServlet;
 import servlet.LogoutServlet;
 import servlet.MeServlet;
@@ -67,16 +68,26 @@ public class HttpServer {
         servlets.addServletWithMapping(CarFeatureServlet.class, "/api/car-features/*");
         servlets.addServletWithMapping(CarUnavailServlet.class, "/api/car-unavails/*");  
         servlets.addServletWithMapping(RoleServlet.class, "/api/roles/*");
-        servlets.addServletWithMapping(UserRoleServlet.class, "/api/user-roles");
+        servlets.addServletWithMapping(UserRoleServlet.class, "/api/user-roles/*");
+        servlets.addServletWithMapping(ImageUploadServlet.class, "/api/images");
+        servlets.addServletWithMapping(UserServlet.class, "/api/users/*");
         
         // 2. static files from ./public served at /static
         ContextHandler statics = new ContextHandler("/static");
         statics.setResourceBase(Config.getString(HttpServer.class, "web", "resource", "./public"));
         statics.setHandler(new ResourceHandler());
-
-        // 3. try the static handler first, then the servlets
+        
+        ImageStorage.getRootDir().mkdirs();
+        ContextHandler images = new ContextHandler("/images");
+        images.setResourceBase(ImageStorage.getRootDir().getAbsolutePath());
+        ResourceHandler imageHandler = new ResourceHandler();
+        imageHandler.setDirectoriesListed(false);
+        imageHandler.setCacheControl("public, max-age=31536000");
+        images.setHandler(imageHandler);
+        
+        // 3. try the static handler first, image second then the servlets
         HandlerList handlers = new HandlerList();
-        handlers.setHandlers(new org.eclipse.jetty.server.Handler[] { statics, servlets });
+        handlers.setHandlers(new org.eclipse.jetty.server.Handler[] { statics, images, servlets });
         _server.setHandler(handlers);
         _server.setStopAtShutdown(true);
     }
