@@ -25,6 +25,7 @@ public class Err {
     public static boolean isSuccess(long e) { return e >= 0; }
     public static boolean isFail(long e)    { return e <  0; }
     public static boolean isNotFound(long e) { return e == NOT_FOUND; }
+    public static boolean isConflict(long e) { return e == CONFLICT; }
 
     /**
      * A transport/connection failure, as opposed to "the row is not there".

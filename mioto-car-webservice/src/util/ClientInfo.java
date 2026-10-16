@@ -13,17 +13,17 @@ import thrift.TLoginInfo;
  */
 public class ClientInfo {
     
-    public static TLoginInfo from(HttpServletRequest request)
+    public static TLoginInfo getLoginInfo(HttpServletRequest request)
     {
         String userAgent = request.getHeader("User-Agent");
         TLoginInfo info = new TLoginInfo();
         info.setUserAgent(userAgent);
-        info.setUserIP(ip(request));
+        info.setUserIP(getIp(request));
         info.setLongSession(false);
         return info;
     }
     
-    public static String ip(HttpServletRequest request)
+    public static String getIp(HttpServletRequest request)
     {
         return request.getRemoteAddr();
     }

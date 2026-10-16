@@ -6,14 +6,18 @@ package servlet;
 
 import error.Err;
 import java.util.LinkedHashMap;
+import java.util.List;
 import java.util.Map;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
+import static servlet.BaseServlet._Logger;
 import thrift.TLoginResult;
+import thrift.TRole;
 import thrift.TSignUpRequest;
 import thrift.TUserResult;
+import thrift.TUserRoleResult;
 import util.ClientHolder;
 import util.ClientInfo;
 import util.CookieSigner;
@@ -83,21 +87,40 @@ public class SignupServlet extends BaseServlet {
             sureq.setPwd(pwd);
 
             _Logger.info("Call signup from mw");
-            TLoginResult ret = ClientHolder.get().signup(sureq, ClientInfo.from(req));
+            TLoginResult ret = ClientHolder.get().signup(sureq, ClientInfo.getLoginInfo(req));
 
             if (Err.isFail(ret.getError())) {
+                if(Err.isNetworkError(ret.getError()))
+                {
+                    _Logger.error("Network error (sign up)");
+                    fail(resp, HttpServletResponse.SC_SERVICE_UNAVAILABLE, Err.FAIL, "Lỗi kết nối mạng");
+                }
                 if (ret.getError() == Err.CONFLICT) {
-                    fail(resp, HttpServletResponse.SC_CONFLICT, Err.CONFLICT, "Số điện thoại này đã tồn tại");
+                    fail(resp, HttpServletResponse.SC_CONFLICT, Err.CONFLICT, ret.getMessage());
                 } else if (Err.isNetworkError(ret.getError())) {
+                    _Logger.error("Sign up failed");
                     fail(resp, HttpServletResponse.SC_INTERNAL_SERVER_ERROR, Err.FAIL, "Lỗi server");
                 }
                 return;
             }
+            TUserRoleResult userRoleResult = ClientHolder.get().getUserRole(ret.getUser().getUserId());
+            if (Err.isFail(userRoleResult.getError())) {
+                if (Err.isNetworkError(userRoleResult.getError())) {
+                    _Logger.error("Network error, get user role");
+                    fail(resp, HttpServletResponse.SC_SERVICE_UNAVAILABLE, Err.FAIL, "Lỗi kết nối mạng");
+                    return;
+                }
+                _Logger.error("get user role failed");
+                fail(resp, HttpServletResponse.SC_INTERNAL_SERVER_ERROR, Err.FAIL, "Lỗi hệ thống");
+                return;
+            }
+            List<TRole> roles = userRoleResult.getValue().getRoles();
 
             CookieUtil.set(resp, CookieSigner.sign(ret.getSessionId()));
             Map<String, Object> data = new LinkedHashMap<String, Object>();
             data.put("user", ret.getUser());
             data.put("time-expired", ret.getTimeExpired());
+            data.put("roles", roles);
             writeJson(resp, HttpServletResponse.SC_CREATED, envelope(0, data));
         } catch (Exception e) {
             _Logger.error("signup failed", e);

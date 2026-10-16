@@ -5,18 +5,28 @@
 package servlet;
 
 import com.google.gson.Gson;
+import com.google.gson.GsonBuilder;
+import com.google.gson.ToNumberStrategy;
+import com.google.gson.stream.JsonReader;
 import error.Err;
 import java.io.BufferedReader;
 import java.io.IOException;
 import java.util.LinkedHashMap;
+import java.util.List;
 import java.util.Map;
 import javax.servlet.ServletException;
 import javax.servlet.http.HttpServlet;
 import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
 import org.apache.log4j.Logger;
+import static servlet.AuthServlet.ATTR_USER;
+import thrift.TLoginInfo;
+import thrift.TRole;
+import thrift.TUser;
 import thrift.TUserResult;
+import thrift.TUserRoleResult;
 import util.ClientHolder;
+import util.ClientInfo;
 import util.CookieSigner;
 import util.CookieUtil;
 
@@ -26,9 +36,27 @@ import util.CookieUtil;
  */
 public class BaseServlet extends HttpServlet{
     private static final long serialVersionUID = 1L;
-    protected static final Logger _Logger = Logger.getLogger(BaseServlet.class);
+    public static final String ATTR_USER = "auth.user";
+    public static final String ATTR_SESSION_ID = "auth.sessionId";
 
-    protected static final Gson GSON = new Gson();
+    protected static final Logger _Logger = Logger.getLogger(BaseServlet.class);
+    protected static final Gson GSON = new GsonBuilder().setObjectToNumberStrategy(new ToNumberStrategy() {
+            @Override
+            public Number readNumber(JsonReader in) throws IOException {
+                String value = in.nextString();
+                try {
+                    long valueLong = Long.parseLong(value);
+                    if (valueLong >= Integer.MIN_VALUE && valueLong <= Integer.MAX_VALUE) {
+                        return (int) valueLong;
+                    }
+                    return valueLong; 
+                } catch (NumberFormatException e) {
+                    return Double.parseDouble(value);
+                }
+            }
+        })
+        .create();
+
 
     @Override
     protected void service(HttpServletRequest req, HttpServletResponse resp)
@@ -112,8 +140,9 @@ public class BaseServlet extends HttpServlet{
         TUserResult result = new TUserResult();
         long sessionId = CookieSigner.verify(CookieUtil.read(req));
         if(sessionId <= 0) return new TUserResult(Err.UNAUTHORIZED, "");
+        TLoginInfo info = ClientInfo.getLoginInfo(req);
         
-        TUserResult ret = ClientHolder.get().getUserBySessionId(sessionId);
+        TUserResult ret = ClientHolder.get().getUserBySessionId(sessionId, info);
         if(Err.isFail(ret.getError()) || ret.value == null)
         {
             if(Err.isNetworkError(ret.getError()))
@@ -140,5 +169,67 @@ public class BaseServlet extends HttpServlet{
         resp.setHeader("Access-Control-Allow-Methods", "GET, POST, PUT, DELETE, OPTIONS");
         resp.setHeader("Access-Control-Allow-Headers", "Content-Type, Authorization");
     }
-
+    
+    protected Integer parseIdFromRequest(HttpServletRequest req)
+    {
+        String ret = req.getPathInfo();
+        if(ret == null || "/".equals(ret)) 
+        {
+            return 0;
+        }
+        try {
+            int id = Integer.parseInt(ret.substring(1));
+            return id > 0 ? id : null;
+        } 
+        catch (NumberFormatException e) {
+            return null;
+        }
+    }
+        protected TUser getUserFromRequest(HttpServletRequest req) {
+        TUser v = (TUser) req.getAttribute(ATTR_USER);
+        return v == null ? null : new TUser(v);
+    }
+    
+    protected boolean hasRole(HttpServletRequest req, HttpServletResponse resp, String role)
+    {
+        TUser user = getUserFromRequest(req);
+        if(user != null)
+        {
+            TUserRoleResult result = ClientHolder.get().getUserRole(user.getUserId());
+            if(Err.isNetworkError(result.getError()))
+            {
+                _Logger.error("Network error, check role " + role);
+                fail(resp, HttpServletResponse.SC_SERVICE_UNAVAILABLE, Err.FAIL, "Lỗi kết nối mạng");
+                return false;
+            }
+            
+            if(result.getValue() != null && result.getValue().isIsSuperAdmin()) return true;
+            
+            if(Err.isSuccess(result.getError()) && result.getValue() != null)
+            {
+                List<TRole> roles = result.getValue().getRoles() == null ? null : result.getValue().getRoles();
+                if(roles != null)
+                {
+                    for (TRole r : roles) {
+                        if (role.equals(r.getName())) {
+                            return true;
+                        }
+                    }
+                }
+            }
+        }
+        _Logger.info("Forbidden, userId=" + (user == null ? "unknown" : user.getUserId())
+                + ", " + req.getMethod() + " " + req.getRequestURI());
+        fail(resp, HttpServletResponse.SC_FORBIDDEN, Err.FORBIDDEN,
+                "Bạn không có quyền thực hiện hành động này");
+        return false;
+    }
+    
+    protected boolean requireAuth(HttpServletRequest req) {
+        if (!"GET".equalsIgnoreCase(req.getMethod())) {
+            return true;
+        }
+        String path = req.getPathInfo();
+        return "/mine".equals(path) || "/admin".equals(path);
+    }
 }

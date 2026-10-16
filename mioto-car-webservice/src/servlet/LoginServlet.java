@@ -6,12 +6,15 @@ package servlet;
 
 import error.Err;
 import java.util.LinkedHashMap;
+import java.util.List;
 import java.util.Map;
 import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
 import thrift.TLoginRequest;
 import thrift.TLoginResult;
+import thrift.TRole;
 import thrift.TUserResult;
+import thrift.TUserRoleResult;
 import util.ClientHolder;
 import util.ClientInfo;
 import util.CookieSigner;
@@ -52,16 +55,16 @@ public class LoginServlet extends BaseServlet {
                 fail(resp, HttpServletResponse.SC_BAD_REQUEST, Err.BAD_REQUEST, "Mật khẩu phải có từ 6 tới 128 kí tự");
                 return;
             }
-            if (!RateLimiter.allow(phone, 5, 300) || !RateLimiter.allow(ClientInfo.ip(req), 30, 300)) {
+            if (!RateLimiter.allow(phone, 5, 300) || !RateLimiter.allow(ClientInfo.getIp(req), 30, 300)) {
                 _Logger.warn("Too many request");
-                fail(resp, 429, Err.FAIL, "Bạn đã gửi quá nhiều yêu cầu vui lòng thử lại");
+                fail(resp, 429, Err.FAIL, "Bạn đã gửi quá nhiều yêu cầu vui lòng thử lại sau");
                 return;
             }
 
             TLoginRequest lreq = new TLoginRequest();
             lreq.setPhone(phone);
             lreq.setPwd(pwd);
-            TLoginResult ret = ClientHolder.get().login(lreq, ClientInfo.from(req));
+            TLoginResult ret = ClientHolder.get().login(lreq, ClientInfo.getLoginInfo(req));
 
             if (Err.isFail(ret.getError())) {
                 if (ret.getError() == Err.FORBIDDEN) {
@@ -76,19 +79,30 @@ public class LoginServlet extends BaseServlet {
                 }
                 return;
             }
-
+            
+            TUserRoleResult userRoleResult = ClientHolder.get().getUserRole(ret.getUser().getUserId());
+            if (Err.isFail(userRoleResult.getError())) {
+                if (Err.isNetworkError(userRoleResult.getError())) {
+                    _Logger.error("Network error, get user role");
+                    fail(resp, HttpServletResponse.SC_SERVICE_UNAVAILABLE, Err.FAIL, "Lỗi kết nối mạng");
+                    return;
+                }
+                _Logger.error("get user role failed");
+                fail(resp, HttpServletResponse.SC_INTERNAL_SERVER_ERROR, Err.FAIL, "Lỗi hệ thống");
+                return;
+            }
+            List<TRole> roles = userRoleResult.getValue().getRoles();
             CookieUtil.set(resp, CookieSigner.sign(ret.getSessionId()));
 
             Map<String, Object> data = new LinkedHashMap<String, Object>();
             data.put("user", ret.getUser());
             data.put("time-expired", ret.getTimeExpired());
+            data.put("roles", roles);
             ok(resp, data);
 
         } catch (Exception e) {
             _Logger.error("login failed", e);
             fail(resp, HttpServletResponse.SC_INTERNAL_SERVER_ERROR, Err.FAIL, "Lỗi hệ thống");
         }
-
     }
-
 }
