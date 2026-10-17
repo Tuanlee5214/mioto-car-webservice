@@ -27,9 +27,7 @@ Upload ảnh (`ImageStorage`) nhận qua `ImageUploadServlet`, check magic bytes
 
 ## Cần gì để chạy
 
-- JDK 8+
-- `mioto-car-middleware` phải đang chạy - webservice không tự đứng một mình được
-- Build bằng `ant`, không cần mở NetBeans
+Cần JDK 8 trở lên, và `mioto-car-middleware` phải đang chạy sẵn vì service này không tự đứng một mình được. Build bằng `ant` là đủ, không cần mở NetBeans.
 
 ## Config
 
@@ -48,7 +46,7 @@ uploadDir=uploads
 imageBaseUrl=http://127.0.0.1:8081/images
 ```
 
-Chú ý: `CookieSigner` fallback về `"change-me"` nếu không set `secret` - nhớ đổi trước khi deploy thật, lộ cái này là forge được cookie đăng nhập của người khác.
+`CookieSigner` sẽ fallback về `"change-me"` nếu không set `secret`, nên nhớ đổi trước khi deploy thật - lộ cái này là forge được cookie đăng nhập của người khác.
 
 CORS hiện đang hardcode origin `http://localhost:5173` trong `BaseServlet.setCorsHeader()`, deploy môi trường khác thì phải sửa tay hoặc đưa ra config.
 
@@ -72,8 +70,8 @@ Tiền tố `/api`, đăng ký trong `apps/HttpServer.java`:
 | POST | `/api/login` | LoginServlet | public |
 | POST | `/api/logout` | LogoutServlet | login |
 | GET/POST/PUT | `/api/profiles` | ProfileServlet | login |
-| GET | `/api/checkauth` | MeServlet | login |
-| CRUD | `/api/cars/*` | CarServlet | GET public, ghi cần login |
+| GET | `/api/checkauth` | MeServlet | public |
+| CRUD | `/api/cars/*` | CarServlet | GET public, trừ GET cho chủ xe hoặc xe cho admin, ghi cần login |
 | CRUD | `/api/car-images/*` | CarImageServlet | GET public, ghi cần login |
 | CRUD | `/api/car-features/*` | CarFeatureServlet | GET public, ghi cần login |
 | CRUD | `/api/car-unavails/*` | CarUnavailServlet | GET public, ghi cần login + chủ xe |
@@ -88,17 +86,10 @@ Tiền tố `/api`, đăng ký trong `apps/HttpServer.java`:
 | CRUD | `/api/user-roles/*` | UserRoleServlet | login |
 | CRUD | `/api/users/*` | UserServlet | login |
 | POST | `/api/images` | ImageUploadServlet | login |
-| GET | `/images/*` | static, Jetty ResourceHandler | public, cache 1 năm |
+| GET | `/images/*` | static, Jetty ResourceHandler | public |
 | GET | `/static/*` | static, Jetty ResourceHandler | public |
 
-Response trả về theo envelope:
-```json
-// ok
-{ "error": 0, "data": { ... } }
-
-// fail
-{ "error": <mã lỗi>, "message": "<mô tả>" }
-```
+Response trả về theo kiểu `{ "error": 0, "data": { ... } }` khi thành công, hoặc `{ "error": <mã lỗi>, "message": "<mô tả>" }` khi lỗi.
 
 ## Cấu trúc
 
